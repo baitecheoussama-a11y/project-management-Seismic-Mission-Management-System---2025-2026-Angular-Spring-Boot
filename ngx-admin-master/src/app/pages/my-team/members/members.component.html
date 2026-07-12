@@ -1,0 +1,397 @@
+<!-- pages/my-team/members/members.component.html -->
+<div class="members-container">
+  
+  <!-- Toggle Sidebar Button (Desktop) -->
+  <button class="toggle-sidebar-btn" (click)="toggleSidebar()" [class.collapsed]="sidebarCollapsed && !isMobile">
+    <nb-icon [icon]="sidebarCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+  </button>
+
+  <!-- Mobile Toggle Button -->
+  <button *ngIf="isMobile && sidebarCollapsed" class="mobile-toggle-btn" (click)="toggleSidebar()">
+    <nb-icon icon="menu-outline"></nb-icon>
+  </button>
+
+  <!-- Main Content Area -->
+  <div class="content-area" [class.sidebar-collapsed]="sidebarCollapsed && !isMobile">
+    
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+
+    <!-- Welcome Message -->
+    <div *ngIf="!selectedEquipe && !isLoading" class="welcome-message">
+      <div class="welcome-card">
+        <nb-icon icon="people-outline" class="welcome-icon"></nb-icon>
+        <h2>Team Members Manager</h2>
+        <p>Select a team from the sidebar to view and manage its members</p>
+        <div class="stats-preview" *ngIf="equipes.length > 0">
+          <div class="stat-item">
+            <nb-icon icon="people-outline"></nb-icon>
+            <span>{{ equipes.length }} Teams</span>
+          </div>
+          <div class="stat-item">
+            <nb-icon icon="person-add-outline"></nb-icon>
+            <span>{{ getTotalMembers() }} Total Members</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Content -->
+    <div *ngIf="selectedEquipe && !isLoading" class="team-content">
+      
+      <div class="content-header">
+        <div class="header-left">
+          <button class="back-btn" (click)="clearSelection()">
+            <nb-icon icon="arrow-back-outline"></nb-icon>
+            <span>Back to Teams</span>
+          </button>
+        </div>
+        
+        <div class="header-center">
+          <div class="team-icon-large" [style.backgroundColor]="getTypeColor(selectedEquipe.type)">
+            <i [class]="getTypeIcon(selectedEquipe.type)"></i>
+          </div>
+          <div class="team-info">
+            <h2>{{ selectedEquipe.nom }}</h2>
+            <span class="team-type-badge">{{ getTypeLabel(selectedEquipe.type) }}</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Mobile-only team show/hide button -->
+          <button class="toggle-sidebar-btn mobile-only" (click)="toggleSidebar()" *ngIf="isMobile">
+            <nb-icon icon="people-outline"></nb-icon>
+            <span>Teams</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Members Section -->
+      <div class="members-section">
+        <div class="section-header">
+          <div class="title-section">
+            <h3><i class="fas fa-user-friends"></i> Team Members</h3>
+            <span class="member-count-badge">{{ teamMembers.length }} members</span>
+          </div>
+          <!-- Only show Add Member button if user has permission -->
+          <button *ngIf="canManageMembers" class="add-member-btn" (click)="openAddMemberModal()">
+            <nb-icon icon="person-add-outline"></nb-icon>
+            <span>Add Member</span>
+          </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar" *ngIf="teamMembers.length > 0">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            placeholder="Search members by name or email..." 
+            [(ngModel)]="searchTerm"
+            (input)="onSearchInput()"
+          />
+          <button *ngIf="searchTerm" class="clear-search" (click)="clearSearch()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+<!-- Members Cards Grid -->
+<div class="members-cards-grid" *ngIf="filteredMembers.length > 0">
+  <div *ngFor="let member of paginatedMembers" class="member-card" (click)="viewEmployeeProfile(member.id, member.prenom, member.nom)">
+    <div class="member-avatar" [style.backgroundColor]="getAvatarColor(member.id)">
+      {{ getInitials(member) }}
+    </div>
+    <div class="member-details">
+      <h4>{{ member.prenom }} {{ member.nom }}</h4>
+      <p class="member-email">{{ member.email }}</p>
+      <div class="member-contact" *ngIf="member.numTel">
+        <a [href]="'tel:' + member.numTel" class="contact-link" (click)="$event.stopPropagation()" title="Call">
+          <i class="fas fa-phone"></i> {{ member.numTel }}
+        </a>
+      </div>
+    </div>
+    <!-- Only show Remove button if user has permission -->
+    <button *ngIf="canManageMembers" class="remove-btn" (click)="$event.stopPropagation(); removeMember(member)" title="Remove from Team">
+      <i class="fas fa-user-minus"></i>
+    </button>
+  </div>
+</div>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredMembers.length === 0 && !isLoading" class="empty-state">
+          <i class="fas fa-users-slash"></i>
+          <h4>No Members Found</h4>
+          <p *ngIf="teamMembers.length === 0">This team doesn't have any members yet.</p>
+          <p *ngIf="teamMembers.length > 0">No members match your search.</p>
+          <!-- Only show Add First Member button if user has permission -->
+          <button *ngIf="teamMembers.length === 0 && canManageMembers" class="add-first-btn" (click)="openAddMemberModal()">
+            <i class="fas fa-user-plus"></i> Add First Member
+          </button>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" *ngIf="filteredMembers.length > itemsPerPage">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+            {{ getCurrentPageEnd() }} of 
+            {{ filteredMembers.length }} members
+          </div>
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" 
+                      class="page-num" 
+                      [class.active]="page === currentPage"
+                      (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="custom-sidebar" 
+       [class.collapsed]="sidebarCollapsed && !isMobile" 
+       [class.mobile-collapsed]="isMobile && sidebarCollapsed">
+    
+    <div class="sidebar-header">
+      <div class="header-content">
+        <nb-icon icon="grid-outline" class="header-icon"></nb-icon>
+        <h3>Teams</h3>
+        <span class="teams-count">{{ filteredEquipes.length }}</span>
+      </div>
+      <button *ngIf="!isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="chevron-right-outline"></nb-icon>
+      </button>
+      <button *ngIf="isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+
+    <!-- ADD SEARCH BAR FOR TEAMS -->
+    <div class="sidebar-search">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Search teams by name or type..." 
+          [(ngModel)]="teamSearchTerm"
+          (input)="filterTeams()"
+        />
+        <button *ngIf="teamSearchTerm" class="clear-search-btn" (click)="clearTeamSearch()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Team Section - Only show if user has permission -->
+    <div class="add-section" *ngIf="canManageTeams">
+      <button *ngIf="!isAddingTeam" class="add-btn" (click)="startAddTeam()">
+        <nb-icon icon="plus-outline"></nb-icon>
+        <span>Create New Team</span>
+      </button>
+      <div *ngIf="isAddingTeam" class="add-inline">
+        <input type="text" class="add-input" [(ngModel)]="newTeamName" (keyup.enter)="createTeam()" placeholder="Team name..." #teamNameInput />
+        <select [(ngModel)]="newTeamType" class="add-select">
+          <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+        </select>
+        <div class="add-actions">
+          <button class="confirm-btn" (click)="createTeam()">
+            <nb-icon icon="checkmark-outline"></nb-icon> Create
+          </button>
+          <button class="cancel-btn" (click)="cancelAddTeam()">
+            <nb-icon icon="close-outline"></nb-icon> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams List -->
+    <div class="teams-section">
+      <div class="teams-list">
+        <!-- No results message -->
+        <div *ngIf="filteredEquipes.length === 0" class="no-results">
+          <nb-icon icon="grid-outline"></nb-icon>
+          <span>No teams found</span>
+          <small *ngIf="teamSearchTerm">Try a different search term</small>
+          <small *ngIf="!teamSearchTerm && canManageTeams">Click "Create New Team" to get started</small>
+        </div>
+        
+        <!-- Display filtered teams -->
+        <div *ngFor="let equipe of filteredEquipes" class="team-item" [class.selected]="selectedEquipe?.id === equipe.id" (click)="selectTeam(equipe)">
+          <div *ngIf="editingTeamId === equipe.id && canManageTeams" class="edit-mode" (click)="$event.stopPropagation()">
+            <input type="text" class="edit-input" [(ngModel)]="editingTeamName" (keyup.enter)="saveEditTeam(equipe)" #editTeamInput />
+            <select [(ngModel)]="editingTeamType" class="edit-select">
+              <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+            </select>
+            <div class="edit-actions">
+              <button class="confirm-btn" (click)="saveEditTeam(equipe)">
+                <nb-icon icon="checkmark-outline"></nb-icon>
+              </button>
+              <button class="cancel-btn" (click)="cancelEditTeam()">
+                <nb-icon icon="close-outline"></nb-icon>
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="editingTeamId !== equipe.id || !canManageTeams" class="normal-mode">
+            <div class="team-info">
+              <div class="team-icon" [style.background]="getTypeColor(equipe.type)">
+                <i [class]="getTypeIcon(equipe.type)"></i>
+              </div>
+              <div class="team-details">
+                <span class="team-name">{{ equipe.nom }}</span>
+                <span class="team-type">{{ getTypeLabel(equipe.type) }}</span>
+              </div>
+           <div class="team-stats">
+  <span class="stat-badge">
+    <nb-icon icon="people-outline"></nb-icon>
+    {{ equipe.memberCount || 0 }}
+  </span>
+</div>
+            </div>
+            <!-- Only show action buttons if user has permission -->
+            <div *ngIf="canManageTeams" class="team-actions" (click)="$event.stopPropagation()">
+              <button class="action-btn edit-btn" (click)="startEditTeam(equipe, $event)" title="Edit Team">
+                <nb-icon icon="edit-outline"></nb-icon>
+              </button>
+              <button class="action-btn delete-btn" (click)="deleteTeam(equipe, $event)" title="Delete Team">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Member Modal (Updated with filter tabs like mission-overview) -->
+<div class="modal-overlay" *ngIf="showAddMemberModal && canManageMembers" (click)="closeAddMemberModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-users"></i> Manage Members - {{ selectedEquipe?.nom }}</h5>
+      <button type="button" class="close-btn" (click)="closeAddMemberModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button class="filter-tab" [class.active]="selectedMemberFilter === 'all'" (click)="selectedMemberFilter = 'all'; filterAvailableMembers()">
+          <i class="fas fa-users"></i>
+          <span>All Members</span>
+          <span class="count">{{ availableMembersForAssignment.length }}</span>
+        </button>
+        <button class="filter-tab" [class.active]="selectedMemberFilter === 'assigned'" (click)="selectedMemberFilter = 'assigned'; filterAvailableMembers()">
+          <i class="fas fa-check-circle"></i>
+          <span>Assigned to Team</span>
+          <span class="count">{{ getAssignedMembersCount() }}</span>
+        </button>
+        <button class="filter-tab" [class.active]="selectedMemberFilter === 'not-assigned'" (click)="selectedMemberFilter = 'not-assigned'; filterAvailableMembers()">
+          <i class="fas fa-user-plus"></i>
+          <span>Not Assigned</span>
+          <span class="count">{{ getNotAssignedMembersCount() }}</span>
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-bar-container">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            class="search-input"
+            placeholder="Search by name, email, or phone..." 
+            [(ngModel)]="memberSearchTerm"
+            (input)="filterAvailableMembers()"
+          />
+          <button *ngIf="memberSearchTerm" class="clear-search" (click)="clearMemberSearch()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Selected Count -->
+      <div class="selected-count" *ngIf="selectedMembersForTeam.length > 0">
+        <i class="fas fa-check-circle"></i>
+        {{ selectedMembersForTeam.length }} member(s) selected for this team
+      </div>
+
+      <!-- Employees List -->
+      <div class="employees-list">
+        <div class="list-header">
+          <span>Employee</span>
+          <span>Current Team</span>
+        </div>
+        
+        <div *ngIf="filteredAvailableMembersList.length === 0" class="empty-members">
+          <i class="fas fa-users-slash"></i>
+          <p *ngIf="selectedMemberFilter === 'all'">No members found in this mission</p>
+          <p *ngIf="selectedMemberFilter === 'assigned'">No members assigned to other teams</p>
+          <p *ngIf="selectedMemberFilter === 'not-assigned'">All members are already assigned to teams</p>
+          <small>Add members to the mission first using mission management</small>
+        </div>
+        
+        <div *ngFor="let member of paginatedAvailableMembers" class="employee-item" 
+             [class.selected]="isMemberSelected(member)"
+             (click)="toggleMemberSelection(member)">
+          <div class="employee-check">
+            <i class="fas" [class.fa-check-square]="isMemberSelected(member)" 
+               [class.fa-square]="!isMemberSelected(member)"></i>
+          </div>
+          <div class="employee-avatar">
+            <div class="avatar-small" [style.background]="getAvatarColor(member.id)">
+              {{ getInitials(member) }}
+            </div>
+          </div>
+          <div class="employee-info">
+            <div class="employee-name">{{ member.prenom }} {{ member.nom }}</div>
+            <div class="employee-details">{{ member.email }} • {{ member.numTel }}</div>
+          </div>
+          <div class="employee-status">
+            <div class="team-info" [class.no-team]="!getEmployeeTeamName(member.id)">
+              <i class="fas" [class.fa-users]="getEmployeeTeamName(member.id)" [class.fa-user-plus]="!getEmployeeTeamName(member.id)"></i>
+              <small *ngIf="getEmployeeTeamName(member.id)">Current: {{ getEmployeeTeamName(member.id) }}</small>
+              <small *ngIf="!getEmployeeTeamName(member.id)" class="no-team-text">Not assigned</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Pagination -->
+      <div class="modal-pagination" *ngIf="filteredAvailableMembersList.length > modalItemsPerPage">
+        <button class="pagination-nav-btn" (click)="previousModalPage()" [disabled]="modalCurrentPage === 1">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="pagination-numbers">
+          <button *ngFor="let page of getModalPageNumbers()" 
+                  class="page-number" 
+                  [class.active]="page === modalCurrentPage"
+                  (click)="goToModalPage(page)">
+            {{ page }}
+          </button>
+        </div>
+        <button class="pagination-nav-btn" (click)="nextModalPage()" [disabled]="modalCurrentPage === modalTotalPages">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="cancel-btn" (click)="closeAddMemberModal()">Cancel</button>
+      <button type="button" class="confirm-btn" (click)="submitAddMembers()" [disabled]="selectedMembersForTeam.length === 0">
+        <i class="fas fa-save"></i> Add to Team
+      </button>
+    </div>
+  </div>
+</div>

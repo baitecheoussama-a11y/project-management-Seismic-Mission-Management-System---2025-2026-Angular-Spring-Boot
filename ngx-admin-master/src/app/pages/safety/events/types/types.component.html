@@ -1,0 +1,204 @@
+<!-- src/app/pages/safety/events/types/types.component.html -->
+
+<div class="types-container">
+  
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Events</span>
+      </button>
+    </div>
+    <div class="header-title">
+      <i class="fas fa-tags"></i>
+      <h1>Event Types Management</h1>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <i class="fas fa-plus"></i>
+      <span>New Type</span>
+    </button>
+  </div>
+
+  <div class="filters-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        placeholder="Search types..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+      <button *ngIf="searchTerm" class="clear-btn" (click)="clearSearch()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="filter-group">
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <div *ngIf="!isLoading" class="types-grid">
+    <div *ngFor="let type of filteredTypes" class="type-card">
+      <div class="card-header">
+        <div class="priority-indicator" [style.backgroundColor]="getPriorityColor(type.niveauPriorite)"></div>
+        <div class="status-badge" [class.active]="type.actif" [class.inactive]="!type.actif">
+          <i class="fas" [class.fa-check-circle]="type.actif" [class.fa-times-circle]="!type.actif"></i>
+          {{ type.actif ? 'Active' : 'Inactive' }}
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h3 class="type-name">{{ type.nom }}</h3>
+        <p class="type-description">{{ type.description || 'No description' }}</p>
+        
+        <div class="type-meta">
+          <div class="meta-item">
+            <i class="fas fa-flag"></i>
+            <span>Priority: <strong>{{ getPriorityLabel(type.niveauPriorite) }}</strong></span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{{ type.evenementsCount || 0 }} event(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn-toggle" (click)="toggleStatus(type)">
+          <i class="fas" [class.fa-toggle-on]="type.actif" [class.fa-toggle-off]="!type.actif"></i>
+          {{ type.actif ? 'Deactivate' : 'Activate' }}
+        </button>
+        <button class="btn-edit" (click)="openEditModal(type)">
+          <i class="fas fa-edit"></i>
+          Edit
+        </button>
+        <button class="btn-delete" (click)="deleteType(type)">
+          <i class="fas fa-trash-alt"></i>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="filteredTypes.length === 0" class="empty-state">
+      <i class="fas fa-tags"></i>
+      <h3>No types found</h3>
+      <p>Start by creating an event type</p>
+      <button class="btn-add-first" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Create Type
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Type Modal -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> New Event Type</h3>
+      <button class="close-btn" (click)="closeAddModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="typeForm">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="nom" placeholder="Ex: Meeting, Training, Workshop..." />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Type description..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority *</label>
+            <select formControlName="niveauPriorite">
+              <option *ngFor="let priority of priorityOptions" [value]="priority.value">
+                {{ priority.label }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select formControlName="actif">
+              <option [value]="true">Active</option>
+              <option [value]="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeAddModal()">Cancel</button>
+      <button class="btn-confirm" (click)="createType()" [disabled]="typeForm.invalid">
+        <i class="fas fa-save"></i> Create
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Type Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-edit"></i> Edit Type</h3>
+      <button class="close-btn" (click)="closeEditModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="typeForm">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="nom" />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority *</label>
+            <select formControlName="niveauPriorite">
+              <option *ngFor="let priority of priorityOptions" [value]="priority.value">
+                {{ priority.label }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select formControlName="actif">
+              <option [value]="true">Active</option>
+              <option [value]="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeEditModal()">Cancel</button>
+      <button class="btn-confirm" (click)="updateType()" [disabled]="typeForm.invalid">
+        <i class="fas fa-save"></i> Update
+      </button>
+    </div>
+  </div>
+</div>

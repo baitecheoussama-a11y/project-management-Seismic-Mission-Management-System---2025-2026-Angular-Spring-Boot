@@ -1,0 +1,30 @@
+<nb-card class="mission-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="map-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Mission Management</h4>
+          <span class="card-subtitle" *ngIf="!isAdmin ">
+            <nb-icon icon="eye-outline" class="subtitle-icon"></nb-icon>
+            View Only Mode
+          </span>
+          <span class="card-subtitle" *ngIf="isAdmin ">
+            <nb-icon icon="settings-outline" class="subtitle-icon"></nb-icon>
+            Full Access - Manage Missions
+          </span>
+        </div>
+      </div>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

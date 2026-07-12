@@ -1,0 +1,258 @@
+@import '../../../@theme/styles/themes';
+
+@include nb-install-component() {
+  
+  .incident-card {
+    box-shadow: nb-theme(card-shadow);
+    border-radius: nb-theme(card-border-radius);
+    
+    .card-header-custom {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      padding: 1.25rem 1.5rem;
+      border-bottom: none;
+      
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        
+        .title-section {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          
+          .header-icon {
+            font-size: 2rem;
+            width: 2rem;
+            height: 2rem;
+            color: white;
+          }
+          
+          .card-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+          }
+          
+          .card-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+            
+            .subtitle-icon {
+              font-size: 0.85rem;
+              width: 0.85rem;
+              height: 0.85rem;
+            }
+          }
+        }
+      }
+    }
+    
+    .card-body-custom {
+      padding: 1.5rem;
+      background-color: nb-theme(background-basic-color-1);
+      
+      .stats-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        
+        .stat-card {
+          background: linear-gradient(135deg, nb-theme(color-primary-500), nb-theme(color-primary-600));
+          border-radius: 12px;
+          padding: 1rem 1.5rem;
+          color: white;
+          text-align: center;
+          min-width: 150px;
+          
+          .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+          }
+          
+          .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+          }
+        }
+      }
+      
+      ::ng-deep {
+        ng2-smart-table {
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            
+            thead {
+              tr {
+                background-color: nb-theme(background-basic-color-2);
+                
+                th {
+                  padding: 1rem;
+                  font-weight: 600;
+                  font-size: 0.875rem;
+                  color: nb-theme(text-basic-color);
+                  border-bottom: 2px solid nb-theme(border-basic-color-3);
+                }
+              }
+            }
+            
+            tbody {
+              tr {
+                transition: all 0.2s ease;
+                
+                &:hover {
+                  background-color: nb-theme(background-basic-color-2);
+                }
+                
+                td {
+                  padding: 0.875rem 1rem;
+                  border-bottom: 1px solid nb-theme(border-basic-color-2);
+                  color: nb-theme(text-basic-color);
+                }
+              }
+            }
+          }
+          
+          .ng2-smart-actions {
+            a {
+              margin: 0 0.25rem;
+              transition: all 0.2s ease;
+              display: inline-flex;
+              align-items: center;
+              
+              &:hover {
+                transform: scale(1.1);
+              }
+            }
+            
+            .ng2-smart-action-add-add {
+              background-color: nb-theme(color-success-500);
+              color: white;
+              padding: 0.5rem 0.8rem;
+              border-radius: 4px;
+              
+              &:hover {
+                background-color: nb-theme(color-success-600);
+              }
+            }
+            
+            .ng2-smart-action-edit-edit {
+              color: nb-theme(color-warning-500);
+              
+              &:hover {
+                color: nb-theme(color-warning-600);
+              }
+            }
+            
+            .ng2-smart-action-delete-delete {
+              color: nb-theme(color-danger-500);
+              
+              &:hover {
+                color: nb-theme(color-danger-600);
+              }
+            }
+          }
+          
+          .ng2-smart-pagination {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+          }
+        }
+        
+        .severity-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 20px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          
+          &.severity-low {
+            background-color: #10b981;
+            color: white;
+          }
+          
+          &.severity-medium {
+            background-color: #f59e0b;
+            color: white;
+          }
+          
+          &.severity-high {
+            background-color: #f97316;
+            color: white;
+          }
+          
+          &.severity-critical {
+            background-color: #ef4444;
+            color: white;
+            animation: pulse 2s infinite;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .card-header-custom .header-content {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .stats-row .stat-card {
+    min-width: 120px;
+    padding: 0.75rem 1rem;
+    
+    .stat-value {
+      font-size: 1.5rem;
+    }
+  }
+  .filter-banner {
+  background-color: nb-theme(color-info-100);
+  border-left: 4px solid nb-theme(color-info-500);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  .filter-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: nb-theme(color-info-800);
+    
+    nb-icon {
+      font-size: 1.2rem;
+    }
+  }
+}
+}

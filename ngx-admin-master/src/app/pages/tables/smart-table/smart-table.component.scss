@@ -1,0 +1,494 @@
+@import '../../../@theme/styles/themes';
+
+@include nb-install-component() {
+  nb-card {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ========================================== */
+/* 🎯 GLOBAL TABLE STYLES */
+/* ========================================== */
+
+::ng-deep {
+
+  /* ----- تنسيق أيقونات الإجراءات ----- */
+  ng2-smart-table i {
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.15);
+    }
+  }
+  
+  /* ----- تنسيق عمود الإجراءات ----- */
+  ng2-smart-table td.ng2-smart-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: auto;
+  }
+  
+  /* ----- تنسيق عنوان عمود الإجراءات ----- */
+  ng2-smart-table th.ng2-smart-actions-title {
+    text-align: center;
+  }
+  
+  /* ----- ألوان الأيقونات المخصصة ----- */
+  .action-icon {
+    font-size: 1.2rem;
+    margin: 0 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.2);
+    }
+  }
+  
+  .contracts-icon {
+    color: #3366ff;
+    
+    &:hover {
+      color: #598bff;
+    }
+  }
+  
+  .medical-icon {
+    color: #00d68f;
+    
+    &:hover {
+      color: #2ce69b;
+    }
+  }
+  
+  /* ----- تنسيق الأزرار المخصصة ----- */
+  a.ng2-smart-action.ng2-smart-action-custom-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    text-align: center;
+  }
+  
+  ng2-st-tbody-custom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+/* ========================================== */
+/* 🎯 CARD HEADER STYLES */
+/* ========================================== */
+
+@include nb-install-component() {
+  
+  .employes-card {
+    box-shadow: nb-theme(card-shadow);
+    border-radius: nb-theme(card-border-radius);
+    
+    .card-header-custom {
+      background: linear-gradient(135deg, nb-theme(color-primary-500) 0%, nb-theme(color-primary-600) 100%);
+      color: white;
+      padding: 1.25rem 1.5rem;
+      border-bottom: none;
+      
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        
+        .title-section {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          
+          .header-icon {
+            font-size: 2rem;
+            width: 2rem;
+            height: 2rem;
+            color: white;
+          }
+          
+          .card-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+          }
+          
+          .card-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+            
+            .subtitle-icon {
+              font-size: 0.85rem;
+              width: 0.85rem;
+              height: 0.85rem;
+            }
+          }
+        }
+      }
+    }
+    
+    .card-body-custom {
+      padding: 1.5rem;
+      background-color: nb-theme(background-basic-color-1);
+      
+      // تحسين مظهر الجدول
+      ::ng-deep {
+        ng2-smart-table {
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            
+            thead {
+              tr {
+                background-color: nb-theme(background-basic-color-2);
+                
+                th {
+                  padding: 1rem;
+                  font-weight: 600;
+                  font-size: 0.875rem;
+                  color: nb-theme(text-basic-color);
+                  border-bottom: 2px solid nb-theme(border-basic-color-3);
+                  
+                  &:first-child {
+                    border-top-left-radius: 8px;
+                  }
+                  
+                  &:last-child {
+                    border-top-right-radius: 8px;
+                  }
+                }
+              }
+            }
+            
+            tbody {
+              tr {
+                transition: all 0.2s ease;
+                
+                &:hover {
+                  background-color: nb-theme(background-basic-color-2);
+                  transform: scale(1.01);
+                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }
+                
+                td {
+                  padding: 0.875rem 1rem;
+                  border-bottom: 1px solid nb-theme(border-basic-color-2);
+                  color: nb-theme(text-basic-color);
+                }
+              }
+            }
+          }
+          
+          // تنسيق الأزرار داخل الجدول
+          .ng2-smart-actions {
+            a {
+              margin: 0 0.25rem;
+              transition: all 0.2s ease;
+              display: inline-flex;
+              align-items: center;
+              
+              &:hover {
+                transform: scale(1.1);
+              }
+            }
+            
+            .ng2-smart-action-add-add {
+              background-color: nb-theme(color-success-500);
+              color: white;
+              padding: 0.5rem 0.8rem;
+              border-radius: 4px;
+              
+              &:hover {
+                background-color: nb-theme(color-success-600);
+              }
+            }
+            
+            .ng2-smart-action-edit-edit {
+              color: nb-theme(color-warning-500);
+              
+              &:hover {
+                color: nb-theme(color-warning-600);
+              }
+            }
+            
+            .ng2-smart-action-delete-delete {
+              color: nb-theme(color-danger-500);
+              
+              &:hover {
+                color: nb-theme(color-danger-600);
+              }
+            }
+          }
+          
+          // تنسيق الـ pager
+          .ng2-smart-pagination {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            
+            .ng2-smart-page-link {
+              border-radius: 4px;
+              margin: 0 0.25rem;
+              transition: all 0.2s ease;
+              
+              &:hover {
+                background-color: nb-theme(color-primary-100);
+              }
+            }
+            
+            .active {
+              .ng2-smart-page-link {
+                background-color: nb-theme(color-primary-500);
+                color: white;
+                border-color: nb-theme(color-primary-500);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ========================================== */
+/* 📅 DATE PICKER & GENDER STYLES */
+/* ========================================== */
+
+::ng-deep {
+  
+  /* ----- تنسيق حقل التاريخ ----- */
+  input[type="date"] {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid nb-theme(border-basic-color-3);
+    background-color: nb-theme(background-basic-color-1);
+    font-family: monospace;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: nb-theme(color-primary-500);
+      box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-500), 0.2);
+    }
+  }
+  
+  /* ----- تنسيق عرض التاريخ في الجدول ----- */
+  .date-cell {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.85rem;
+    background: nb-theme(background-basic-color-2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+    letter-spacing: 0.5px;
+  }
+  
+  /* ----- تنسيق قائمة الجنس المنسدلة ----- */
+  .ng2-smart-filter select,
+  .ng2-smart-td select {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid nb-theme(border-basic-color-3);
+    background-color: nb-theme(background-basic-color-1);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: nb-theme(color-primary-500);
+      box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-500), 0.2);
+    }
+  }
+  
+  /* ----- تنسيق عرض الجنس في الجدول ----- */
+  .gender-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 500;
+    
+    &.gender-male {
+      background-color: rgba(nb-theme(color-primary-500), 0.1);
+      color: nb-theme(color-primary-500);
+    }
+    
+    &.gender-female {
+      background-color: rgba(nb-theme(color-danger-500), 0.1);
+      color: nb-theme(color-danger-500);
+    }
+  }
+  
+  /* ----- أيقونات الجنس ----- */
+  .gender-icon {
+    font-size: 1rem;
+  }
+}
+
+/* ========================================== */
+/* 📱 RESPONSIVE STYLES */
+/* ========================================== */
+
+@media (max-width: 768px) {
+  .card-header-custom {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start !important;
+      
+      .title-section {
+        flex-direction: column;
+        align-items: flex-start !important;
+      }
+    }
+  }
+  
+  .card-body-custom {
+    padding: 1rem !important;
+    
+    ::ng-deep {
+      .ng2-smart-actions {
+        a {
+          margin: 0 0.1rem !important;
+        }
+        
+        .ng2-smart-action-add-add {
+          padding: 0.25rem 0.5rem !important;
+          font-size: 0.75rem;
+        }
+      }
+      
+      th, td {
+        padding: 0.5rem !important;
+        font-size: 0.75rem;
+      }
+      
+      input[type="date"],
+      select {
+        padding: 0.25rem;
+        font-size: 0.7rem;
+      }
+      
+      .date-cell {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.3rem;
+      }
+      
+      .gender-cell {
+        padding: 0.1rem 0.4rem;
+        font-size: 0.7rem;
+      }
+    }
+  }
+}
+
+/* ========================================== */
+/* ✨ ANIMATIONS */
+/* ========================================== */
+
+::ng-deep {
+  .ng2-smart-table tbody tr {
+    animation: fadeInUp 0.3s ease;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* ========================================== */
+/* 🎯 DROPDOWN MENU BUTTON STYLES */
+/* ========================================== */
+
+::ng-deep {
+  
+  /* تنسيق عمود القائمة المنسدلة */
+  ng2-smart-table th:first-child,
+  ng2-smart-table td:first-child {
+    text-align: center;
+    width: 80px;
+  }
+  
+  /* تنسيق زر القائمة */
+  .actions-dropdown-btn {
+    padding: 0.25rem 0.6rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      transform: scale(1.1);
+    }
+  }
+  
+  /* تنسيق قائمة السياق */
+  .cdk-overlay-container {
+    .context-menu {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      
+      .menu-item {
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background-color: nb-theme(background-basic-color-2);
+        }
+        
+        a {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          
+          nb-icon {
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+  }
+  // smart-table.component.scss - Add this
+.clear-filter-btn {
+  margin-left: 1rem;
+  
+  nb-icon {
+    margin-right: 0.25rem;
+  }
+}
+}
+
+

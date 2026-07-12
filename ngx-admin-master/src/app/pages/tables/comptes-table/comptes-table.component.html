@@ -1,0 +1,62 @@
+<div class="comptes-card">
+  <div class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon class="header-icon" icon="people-outline"></nb-icon>
+        <div class="title-text">
+          <div class="card-title">
+            Account Management
+            <span *ngIf="specificEmployeName" class="specific-badge">
+              {{ specificEmployeName }}
+            </span>
+          </div>
+          <div class="card-subtitle">
+            <nb-icon class="subtitle-icon" icon="person-outline"></nb-icon>
+            <span>Manage user accounts and permissions</span>
+          </div>
+        </div>
+      </div>
+      <button *ngIf="specificEmployeName" class="back-btn" (click)="goBack()" status="basic">
+        <nb-icon icon="arrow-back-outline"></nb-icon>
+        <span>Back to Employees</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body-custom">
+    <div class="info-message" *ngIf="specificEmployeName && !selectedCompte">
+      <nb-icon icon="info-outline"></nb-icon>
+      <span>
+        Click on an account to select it, then use the <strong>Reset Password</strong> button below.
+      </span>
+    </div>
+
+    <div class="actions-toolbar">
+      <div class="selected-info" *ngIf="selectedCompte">
+        <nb-icon icon="checkmark-circle-outline"></nb-icon>
+        <span>Selected: <strong>{{ selectedCompte.username }}</strong></span>
+      </div>
+      <div class="selected-info" *ngIf="!selectedCompte">
+        <nb-icon icon="info-outline"></nb-icon>
+        <span>No account selected</span>
+      </div>
+      <button 
+        class="reset-password-btn"
+        (click)="onResetPassword()" 
+        [disabled]="!selectedCompte"
+        status="danger">
+        <nb-icon icon="lock-outline"></nb-icon>
+        <span>Reset Password</span>
+      </button>
+    </div>
+
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source"
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)"
+      (userRowSelect)="onUserRowSelect($event)">
+    </ng2-smart-table>
+  </div>
+</div>

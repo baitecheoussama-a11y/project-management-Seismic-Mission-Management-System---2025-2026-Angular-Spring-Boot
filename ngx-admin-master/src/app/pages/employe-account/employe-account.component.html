@@ -1,0 +1,280 @@
+<div class="account-container">
+  <!-- Header -->
+  <nb-card class="header-card">
+    <nb-card-header>
+      <div class="header-content">
+        <button nbButton ghost status="primary" (click)="goBack()" class="back-btn">
+          <nb-icon icon="arrow-back-outline"></nb-icon> Back
+        </button>
+        <div class="title-section">
+          <nb-icon icon="person-done-outline" class="header-icon"></nb-icon>
+          <div>
+            <h2>Employee Account Profile</h2>
+            <p class="subtitle">{{ employeName }} - Complete Information</p>
+          </div>
+        </div>
+      </div>
+    </nb-card-header>
+  </nb-card>
+
+  <div *ngIf="loading" class="loading-container">
+    <nb-spinner size="large" status="primary"></nb-spinner>
+    <p>Loading employee data...</p>
+  </div>
+
+  <div *ngIf="!loading && employeDetails" class="content-grid">
+    
+    <!-- Personal Information Card -->
+    <nb-card class="info-card personal-card">
+      <nb-card-header>
+        <div class="card-title">
+          <nb-icon icon="person-outline" class="card-icon"></nb-icon>
+          <span>Personal Information</span>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Full Name</label>
+            <div class="info-value">{{ employeDetails.prenom }} {{ employeDetails.nom }}</div>
+          </div>
+          <div class="info-item">
+            <label>National ID</label>
+            <div class="info-value">{{ employeDetails.numIdentite || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>Birth Date</label>
+            <div class="info-value">{{ formatDate(employeDetails.dateNaissance) }}</div>
+          </div>
+          <div class="info-item">
+            <label>Birth Place</label>
+            <div class="info-value">{{ employeDetails.lieuNaissance || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>Gender</label>
+            <div class="info-value">{{ employeDetails.sexe === 'HOMME' ? '👨 Male' : '👩 Female' }}</div>
+          </div>
+          <div class="info-item">
+            <label>Email</label>
+            <div class="info-value">{{ employeDetails.email || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>Phone</label>
+            <div class="info-value">{{ employeDetails.numTel || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>Address</label>
+            <div class="info-value">{{ employeDetails.adresse || '-' }}</div>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+
+    <!-- Enhanced Account Card -->
+    <nb-card class="info-card account-card">
+      <nb-card-header>
+        <div class="card-title">
+          <nb-icon icon="lock-outline" class="card-icon"></nb-icon>
+          <span>Account Information</span>
+        </div>
+        <!-- Action buttons for existing account - shows only for admin -->
+        <div class="card-actions" *ngIf="employeDetails?.username && employeDetails?.username !== 'Aucun compte' && authService.hasRole('ADMIN')">
+          <button nbButton ghost status="info" size="small" (click)="editAccount()" nbTooltip="Edit Account">
+            <nb-icon icon="edit-outline"></nb-icon>
+          </button>
+          <button nbButton ghost status="warning" size="small" (click)="resetPassword()" nbTooltip="Reset Password">
+            <nb-icon icon="refresh-outline"></nb-icon>
+          </button>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <!-- If account exists -->
+        <div *ngIf="employeDetails?.username && employeDetails?.username !== 'Aucun compte'">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Username</label>
+              <div class="info-value">{{ employeDetails.username }}</div>
+            </div>
+            <div class="info-item">
+              <label>Status</label>
+              <div class="info-value">
+                <span class="status-badge" [class]="getStatusBadgeClass(employeDetails.compteStatus)">
+                  {{ employeDetails.compteStatus }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- If no account exists - shows only for admin -->
+        <div *ngIf="(!employeDetails?.username || employeDetails?.username === 'Aucun compte') && authService.hasRole('ADMIN')" class="no-account-section">
+          <div class="no-account-icon">
+            <nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+          </div>
+          <h5>No Account Found</h5>
+          <p class="text-muted">This employee doesn't have a user account yet.</p>
+          <button nbButton status="primary" (click)="createAccount()" class="create-account-btn">
+            <nb-icon icon="plus-outline"></nb-icon>
+            Create Account
+          </button>
+        </div>
+        
+        <!-- Message for regular user when no account exists -->
+        <div *ngIf="(!employeDetails?.username || employeDetails?.username === 'Aucun compte') && !authService.hasRole('ADMIN')" class="no-account-section">
+          <div class="no-account-icon">
+            <nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+          </div>
+          <h5>No Account Found</h5>
+          <p class="text-muted">This employee doesn't have a user account yet. Please contact administrator.</p>
+        </div>
+      </nb-card-body>
+    </nb-card>
+
+    <!-- NEW: Function Card (Replaces Contracts Card) -->
+    <nb-card class="info-card function-card">
+      <nb-card-header>
+        <div class="card-title">
+          <nb-icon icon="briefcase-outline" class="card-icon"></nb-icon>
+          <span>Job Function</span>
+        </div>
+        <div class="card-actions" *ngIf="authService.hasRole('ADMIN')">
+          <button nbButton ghost status="primary" size="small" (click)="editFunction()" nbTooltip="Edit Function">
+            <nb-icon icon="edit-outline"></nb-icon>
+          </button>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div *ngIf="employeDetails.fonction; else noFunction">
+          <div class="function-details">
+            <div class="function-header">
+              <nb-icon icon="star-outline" status="primary" class="function-icon"></nb-icon>
+              <h3 class="function-name">{{ employeDetails.fonction.nom }}</h3>
+            </div>
+            <div *ngIf="employeDetails.fonction.description" class="function-description">
+              <label>Description</label>
+              <p>{{ employeDetails.fonction.description }}</p>
+            </div>
+            <div class="function-stats">
+              <div class="stat-item">
+                <nb-icon icon="people-outline"></nb-icon>
+                <span>Department Role</span>
+              </div>
+              <div class="stat-item" *ngIf="employeDetails.fonction.nombreEmployes">
+                <nb-icon icon="briefcase-outline"></nb-icon>
+                <span>{{ employeDetails.fonction.nombreEmployes }} employees in this function</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noFunction>
+          <div class="empty-state">
+            <nb-icon icon="briefcase-outline" status="basic"></nb-icon>
+            <p>No function assigned</p>
+            <button *ngIf="authService.hasRole('ADMIN')" nbButton size="small" status="primary" (click)="assignFunction()" class="assign-btn">
+              <nb-icon icon="plus-outline"></nb-icon>
+              Assign Function
+            </button>
+          </div>
+        </ng-template>
+      </nb-card-body>
+    </nb-card>
+
+    <!-- Medical Record Card -->
+    <nb-card class="info-card medical-card">
+      <nb-card-header>
+        <div class="card-title">
+          <nb-icon icon="heart-outline" class="card-icon"></nb-icon>
+          <span>Medical Record</span>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div *ngIf="employeDetails.dossierMedical; else noMedical">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Blood Type</label>
+              <div class="info-value">{{ employeDetails.dossierMedical.groupeSanguin || '-' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Medical History</label>
+              <div class="info-value">{{ employeDetails.dossierMedical.antecedentsMedicaux || '-' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Allergies</label>
+              <div class="info-value">{{ employeDetails.dossierMedical.allergies || '-' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Vaccinations</label>
+              <div class="info-value">{{ employeDetails.dossierMedical.vaccinations || '-' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Current Medications</label>
+              <div class="info-value">{{ employeDetails.dossierMedical.medicationsActuelles || '-' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Primary Doctor</label>
+              <div class="info-value">{{ employeDetails.dossierMedical.medecinTraitant || '-' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Last Medical Visit</label>
+              <div class="info-value">{{ formatDate(employeDetails.dossierMedical.derniereVisiteMedicale) }}</div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noMedical>
+          <div class="empty-state">
+            <nb-icon icon="heart-outline" status="basic"></nb-icon>
+            <p>No medical record found</p>
+          </div>
+        </ng-template>
+      </nb-card-body>
+    </nb-card>
+
+ <!-- Roles Card -->
+<nb-card class="info-card roles-card">
+  <nb-card-header>
+    <div class="roles-header">
+      <div class="card-title">
+        <nb-icon icon="people-outline" class="card-icon"></nb-icon>
+        <span>Roles & Permissions ({{ employeDetails.roles?.length || 0 }})</span>
+      </div>
+      <!-- Button to go to roles management page - ONLY FOR ADMIN -->
+      <button *ngIf="authService.hasRole('ADMIN')" nbButton status="primary" size="small" (click)="goToRoles()">
+        <nb-icon icon="settings-outline"></nb-icon>
+        Manage Roles
+      </button>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    <!-- Display only -->
+    <div *ngIf="employeDetails.roles && employeDetails.roles.length > 0; else noRoles">
+      <div *ngFor="let role of employeDetails.roles" class="role-item">
+        <div class="role-header">
+          <div class="role-info">
+            <nb-icon icon="person-add-outline" status="primary"></nb-icon>
+            <strong>{{ role.name }}</strong>
+            <span class="role-type">{{ role.type }}</span>
+          </div>
+          <span class="role-status" 
+                [class.active]="role.active" 
+                [class.inactive]="!role.active">
+            {{ role.active ? 'ACTIVE' : 'INACTIVE' }}
+          </span>
+        </div>
+        <div class="role-dates">
+          <small>
+            {{ formatDate(role.dateDebut) }} → 
+            {{ formatDate(role.dateFin) || 'No expiry' }}
+          </small>
+        </div>
+      </div>
+    </div>
+    <ng-template #noRoles>
+      <div class="empty-state">
+        <nb-icon icon="people-outline"></nb-icon>
+        <p>No roles assigned</p>
+      </div>
+    </ng-template>
+  </nb-card-body>
+</nb-card>
+  </div>
+</div>

@@ -1,0 +1,272 @@
+package com.pfe.webapp.controller;
+
+import com.pfe.webapp.dto.EmployeDTO;
+import com.pfe.webapp.dto.EquipeDTO;
+import com.pfe.webapp.dto.EquipeRequestDTO;
+import com.pfe.webapp.dto.rapport.RapportResponseDTO;
+import com.pfe.webapp.dto.team.*;
+import com.pfe.webapp.dto.team.EquipeReportsDTO;
+import com.pfe.webapp.entity.AffectationEmploye;
+import com.pfe.webapp.entity.Compte;
+import com.pfe.webapp.entity.Employe;
+import com.pfe.webapp.entity.TypeActivite;
+import com.pfe.webapp.repository.AffectationEmployeRepository;
+import com.pfe.webapp.repository.CompteRepository;
+import com.pfe.webapp.service.EquipeService;
+import com.pfe.webapp.service.team.AffectationEquipeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/equipes")
+@CrossOrigin(origins = "http://localhost:4200")
+public class EquipeController {
+
+    @Autowired
+    private EquipeService equipeService;
+
+    @Autowired
+    private AffectationEquipeService affectationEquipeService;
+
+    @Autowired
+    private CompteRepository compteRepository;
+
+    @Autowired
+    private AffectationEmployeRepository affectationEmployeRepository;
+
+
+    @GetMapping
+    public ResponseEntity<List<EquipeDTO>> getAllEquipes() {
+        return ResponseEntity.ok(equipeService.getAllEquipes());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<EquipeDTO> getEquipeById(@PathVariable Long id) {
+        return ResponseEntity.ok(equipeService.getEquipeById(id));
+    }
+
+    @GetMapping("/type/{type}")
+    public ResponseEntity<List<EquipeDTO>> getEquipesByType(@PathVariable TypeActivite type) {
+        return ResponseEntity.ok(equipeService.getEquipesByType(type));
+    }
+
+    @GetMapping("/{id}/members")
+    public ResponseEntity<List<EmployeDTO>> getEquipeMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(equipeService.getEquipeMembers(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<EquipeDTO> createEquipe(@RequestBody EquipeRequestDTO request) {
+        return new ResponseEntity<>(equipeService.createEquipe(request), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EquipeDTO> updateEquipe(@PathVariable Long id, @RequestBody EquipeRequestDTO request) {
+        return ResponseEntity.ok(equipeService.updateEquipe(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEquipe(@PathVariable Long id) {
+        equipeService.deleteEquipe(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/assign")
+    public ResponseEntity<Void> assignEmployeesToEquipe(@PathVariable Long id, @RequestBody List<Long> employeIds) {
+        equipeService.assignEmployeesToEquipe(id, employeIds);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{equipeId}/employees/{employeId}")
+    public ResponseEntity<Void> removeEmployeeFromEquipe(@PathVariable Long equipeId, @PathVariable Long employeId) {
+        equipeService.removeEmployeeFromEquipe(equipeId, employeId);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    // Assign activity to equipe
+    @PostMapping("/assign-activity")
+    public ResponseEntity<Void> assignActivityToEquipe(@RequestBody AssignActivityRequestDTO request) {
+        affectationEquipeService.assignActivityToEquipe(request);
+        return ResponseEntity.ok().build();
+    }
+
+    // Remove activity from equipe
+    @DeleteMapping("/{equipeId}/activities/{activeId}")
+    public ResponseEntity<Void> removeActivityFromEquipe(
+            @PathVariable Long equipeId,
+            @PathVariable Long activeId,
+            @RequestParam Long missionId) {
+        affectationEquipeService.removeActivityFromEquipe(equipeId, activeId, missionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==================== NEW ENDPOINTS FOR TEAM SIDEBAR ====================
+
+    // Get my team (the team of the logged-in employee)
+    @GetMapping("/my-team")
+    public ResponseEntity<?> getMyTeam(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Compte compte = compteRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Employe employe = compte.getEmploye();
+            if (employe == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No employee associated with this account"));
+            }
+
+            EquipeDTO myEquipe = equipeService.getMyEquipe(employe.getId());
+            return ResponseEntity.ok(myEquipe);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Get available employees for my mission (to add to team)
+    @GetMapping("/my-team/available-members")
+    public ResponseEntity<?> getAvailableMembersForMyTeam(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Compte compte = compteRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Employe employe = compte.getEmploye();
+            if (employe == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No employee associated with this account"));
+            }
+
+            // First get the employee's current mission
+            LocalDate currentDate = LocalDate.now();
+            List<AffectationEmploye> affectations = affectationEmployeRepository
+                    .findByEmployeIdAndDateFinAfterOrDateFinNull(employe.getId(), currentDate);
+
+            if (affectations.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "You are not assigned to any mission"));
+            }
+
+            Long missionId = affectations.get(0).getMission().getId();
+            List<EmployeDTO> availableMembers = equipeService.getAvailableEmployeesForMission(missionId);
+
+            return ResponseEntity.ok(availableMembers);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Get all equipes with member count (for sidebar)
+    @GetMapping("/all-with-count")
+    public ResponseEntity<List<EquipeDTO>> getAllEquipesWithMemberCount() {
+        return ResponseEntity.ok(equipeService.getAllEquipesWithMemberCount());
+    }
+
+    // Get equipe members by equipe ID
+    @GetMapping("/{id}/members-list")
+    public ResponseEntity<List<EmployeDTO>> getEquipeMembersById(@PathVariable Long id) {
+        return ResponseEntity.ok(equipeService.getEquipeMembersById(id));
+    }
+
+    // Get current user's equipe
+    @GetMapping("/my-equipe")
+    public ResponseEntity<?> getCurrentUserEquipe(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Compte compte = compteRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Employe employe = compte.getEmploye();
+            if (employe == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No employee associated with this account"));
+            }
+
+            EquipeDTO myEquipe = equipeService.getCurrentUserEquipe(employe.getId());
+            if (myEquipe == null) {
+                return ResponseEntity.ok(Map.of("hasEquipe", false));
+            }
+
+            return ResponseEntity.ok(Map.of("hasEquipe", true, "equipe", myEquipe));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Get all equipes with activities
+    // EquipeController.java - تأكد من استخدام البيانات الصحيحة
+    @GetMapping("/all-with-activities")
+    public ResponseEntity<List<EquipeActivitiesDTO>> getAllEquipesWithActivities() {
+        return ResponseEntity.ok(equipeService.getAllEquipesWithActivities());
+    }
+    // Get activities by equipe ID
+    @GetMapping("/{equipeId}/activities/mission/{missionId}")
+    public ResponseEntity<List<ActiveDTO>> getActivitiesByEquipeId(
+            @PathVariable Long equipeId,
+            @PathVariable Long missionId) {
+        return ResponseEntity.ok(equipeService.getActivitiesByEquipeId(equipeId, missionId));
+    }
+
+    // controller/EquipeController.java - أضف هذه endpoints
+
+    // Get all equipes with report counts
+    @GetMapping("/all-with-reports")
+    public ResponseEntity<List<EquipeReportsDTO>> getAllEquipesWithReportCounts() {
+        return ResponseEntity.ok(equipeService.getAllEquipesWithReportCounts());
+    }
+
+    // Get reports by equipe ID
+    @GetMapping("/{equipeId}/reports/mission/{missionId}")
+    public ResponseEntity<List<RapportResponseDTO>> getReportsByEquipeId(
+            @PathVariable Long equipeId,
+            @PathVariable Long missionId) {
+        return ResponseEntity.ok(equipeService.getReportsByEquipeId(equipeId, missionId));
+    }
+
+    // EquipeController.java - تأكد من استخدام البيانات الصحيحة
+
+    // ✅ NEW: Get assignments for an equipe in a mission
+    @GetMapping("/{equipeId}/assignments/mission/{missionId}")
+    public ResponseEntity<List<AffectationEquipeDTO>> getAssignmentsByEquipeAndMission(
+            @PathVariable Long equipeId,
+            @PathVariable Long missionId) {
+        return ResponseEntity.ok(affectationEquipeService.getAssignmentsByEquipeAndMission(equipeId, missionId));
+    }
+
+    // ✅ NEW: Get a specific assignment by ID
+    @GetMapping("/assignments/{id}")
+    public ResponseEntity<AffectationEquipeDTO> getAssignmentById(@PathVariable Long id) {
+        return ResponseEntity.ok(affectationEquipeService.getAssignmentById(id));
+    }
+
+    // ✅ NEW: Update real dates for an assignment
+    @PutMapping("/assignments/{id}/real-dates")
+    public ResponseEntity<AffectationEquipeDTO> updateRealDates(
+            @PathVariable Long id,
+            @RequestBody UpdateAffectationEquipeRequestDTO request) {
+        return ResponseEntity.ok(affectationEquipeService.updateRealDates(id, request));
+    }
+
+
+    // EquipeController.java - Add new endpoint
+
+    @PutMapping("/assignments/update-real-dates")
+    public ResponseEntity<AffectationEquipeDTO> updateRealDatesAndStatus(
+            @RequestBody UpdateRealDatesAndStatusRequestDTO request) {
+        AffectationEquipeDTO updated = affectationEquipeService.updateRealDatesAndStatus(
+                request.getActiveId(),
+                request.getMissionId(),
+                request.getDateStartReelle(),
+                request.getDateFinReelle()
+        );
+        return ResponseEntity.ok(updated);
+    }
+
+}

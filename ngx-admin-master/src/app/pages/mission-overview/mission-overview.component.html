@@ -1,0 +1,1462 @@
+<!-- mission-overview.component.html -->
+<div class="mission-detail-container">
+  
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>Loading mission data...</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && mission" class="mission-content fade-up">
+    
+    <!-- Header Section -->
+    <div class="mission-header">
+        <button class="back-btn" (click)="goBack()" *ngIf="!fromDashboard">
+    <i class="fas fa-arrow-left"></i>
+    <span>Back to Missions</span>
+  </button>
+      
+      <div class="mission-title-section">
+        <div class="mission-icon-wrapper">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="mission-info">
+          <h1>{{ mission.codeMission }}</h1>
+          <p class="mission-description">{{ mission.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-cards-grid">
+      <div class="stat-card" *ngFor="let stat of statsCards" [style.animation-delay]="stat.delay">
+        <div class="stat-icon" [class]="stat.iconClass">
+          <i [class]="stat.icon"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
+        </div>
+      </div>
+    </div>
+    
+<!-- Current Project Card -->
+<div class="current-project-card" *ngIf="currentProjectData">
+  <div class="project-header" (click)="viewProjectDetail()" style="cursor: pointer;">
+    <div class="project-title-section">
+      <div class="project-icon">
+        <i class="fas fa-flag-checkered"></i>
+      </div>
+      <div>
+        <h3>Current Project</h3>
+        <h2>{{ currentProjectData.nom }}</h2>
+      </div>
+    </div>
+    <!-- Use status code directly with the color and text methods -->
+    <div class="project-status" [style.background]="getProjectStatusColor(currentProjectData.status)">
+      {{ getProjectStatusText(currentProjectData.status) }}
+    </div>
+  </div>
+  
+  <!-- Rest of the template -->
+  <p class="project-description">{{ currentProjectData.description }}</p>
+  
+  <div class="project-dates">
+    <div class="date-item">
+      <i class="far fa-calendar-alt"></i>
+      <span>Started: {{ currentProjectData.objectifDebut | date }}</span>
+    </div>
+    <div class="date-item">
+      <i class="far fa-calendar-check"></i>
+      <span>Target: {{ currentProjectData.objectifFin | date }}</span>
+    </div>
+  </div>
+  
+  <div class="project-progress">
+    <div class="progress-label">
+      <span>Project Progress</span>
+      <strong>{{ currentProjectData.progression }}%</strong>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" [style.width.%]="currentProjectData.progression" [style.background]="getProgressColor(currentProjectData.progression)"></div>
+    </div>
+  </div>
+  
+  <div class="project-footer">
+    <button class="view-project-btn" (click)="viewProjectDetail()">
+      <i class="fas fa-eye"></i>
+      <span>View Project Details</span>
+      <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+<!-- No Project Card -->
+<div class="no-project-card" *ngIf="!currentProjectData && !isLoading">
+  <div class="no-project-icon">
+    <i class="fas fa-project-diagram"></i>
+  </div>
+  <div class="no-project-content">
+    <h3>No Active Project</h3>
+    <p>This mission doesn't have an active project yet. Create one to start tracking progress.</p>
+    <button *ngIf="canCreateProject" class="create-project-btn" (click)="openCreateProjectModal()">
+      <i class="fas fa-plus-circle"></i>
+      <span>Create New Project</span>
+    </button>
+  </div>
+</div>
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button class="tab-btn" [class.active]="selectedTab === 'overview'" (click)="selectTab('overview')">
+        <i class="fas fa-chart-pie"></i>
+        <span>Overview</span>
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab === 'equipment'" (click)="selectTab('equipment')">
+        <i class="fas fa-microchip"></i>
+        <span>Equipment</span>
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab === 'resources'" (click)="selectTab('resources')">
+        <i class="fas fa-cubes"></i>
+        <span>Resources</span>
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab === 'team'" (click)="selectTab('team')">
+        <i class="fas fa-users"></i>
+        <span>Team</span>
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab === 'actives'" (click)="selectTab('actives')">
+  <i class="fas fa-tasks"></i>
+  <span>Activities</span>
+</button>
+      <button class="tab-btn" [class.active]="selectedTab === 'finance'" (click)="selectTab('finance')">
+        <i class="fas fa-coins"></i>
+        <span>Finance</span>
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      
+      <!-- Overview Tab -->
+      <div *ngIf="selectedTab === 'overview'" class="overview-tab">
+        <div class="stats-grid-2cols">
+          <div class="info-card">
+            <div class="card-header">
+              <i class="fas fa-chart-simple"></i>
+              <h4>Equipment Health</h4>
+            </div>
+            <div class="equipment-status">
+              <div class="status-item">
+                <span class="status-dot good"></span>
+                <span>Good Condition</span>
+                <strong>{{ mission.aggregatedEquipment.byStatus.good }}</strong>
+              </div>
+              <div class="status-item">
+                <span class="status-dot broken"></span>
+                <span>Broken</span>
+                <strong>{{ mission.aggregatedEquipment.byStatus.broken }}</strong>
+              </div>
+              <div class="status-item">
+                <span class="status-dot repair"></span>
+                <span>In Repair</span>
+                <strong>{{ mission.aggregatedEquipment.byStatus.inRepair }}</strong>
+              </div>
+            </div>
+            <div class="health-bar">
+              <div class="segment good" [style.width.%]="(mission.aggregatedEquipment.byStatus.good / mission.aggregatedEquipment.total) * 100"></div>
+              <div class="segment broken" [style.width.%]="(mission.aggregatedEquipment.byStatus.broken / mission.aggregatedEquipment.total) * 100"></div>
+              <div class="segment repair" [style.width.%]="(mission.aggregatedEquipment.byStatus.inRepair / mission.aggregatedEquipment.total) * 100"></div>
+            </div>
+          </div>
+          
+          <div class="info-card">
+            <div class="card-header">
+              <i class="fas fa-chart-line"></i>
+              <h4>Resource Consumption</h4>
+            </div>
+            <div class="resource-summary">
+              <div class="resource-item">
+                <span>Consumed</span>
+                <strong>{{ mission.aggregatedResources.consumed | number }} / {{ mission.aggregatedResources.total | number }} units</strong>
+              </div>
+              <div class="resource-progress-bar">
+                <div class="progress-fill" [style.width.%]="(mission.aggregatedResources.consumed / mission.aggregatedResources.total) * 100"></div>
+              </div>
+              <div class="resource-item">
+                <span>Remaining</span>
+                <strong>{{ mission.aggregatedResources.remaining | number }} units</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="recent-activities-card">
+          <h4>
+            <i class="fas fa-clock"></i>
+            Recent Activities
+          </h4>
+          <div class="activity-timeline">
+            <div *ngFor="let activity of mission.recentActivities" class="timeline-item">
+              <div class="timeline-icon" [style.background]="activity.color">
+                <i [class]="activity.icon"></i>
+              </div>
+              <div class="timeline-content">
+                <p>{{ activity.text }}</p>
+                <span>{{ activity.time }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equipment Tab -->
+      <div *ngIf="selectedTab === 'equipment'" class="equipment-tab">
+        <div class="search-bar-container">
+          <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              class="search-input"
+              placeholder="Search equipment..." 
+              [(ngModel)]="equipmentSearchTerm"
+              (input)="filterEquipment()"
+            />
+            <button *ngIf="equipmentSearchTerm" class="clear-search" (click)="equipmentSearchTerm = ''; filterEquipment()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="search-stats" *ngIf="equipmentSearchTerm">
+            Found {{ filteredEquipmentList.length }} of {{ equipmentList.length }} equipment
+          </div>
+        </div>
+
+        <!-- Equipment Grid with Pagination -->
+        <div class="equipment-grid">
+          <div *ngFor="let equipment of paginatedFilteredEquipmentList" class="equipment-card-full" (click)="openEquipmentTypeDetail(equipment)">
+            
+            <!-- Card Header with Icon and Type Name -->
+            <div class="equipment-header">
+              <div class="equipment-icon" [style.background]="equipment.color + '20'">
+                <i [class]="equipment.icon" [style.color]="equipment.color"></i>
+              </div>
+              <div class="equipment-info">
+                <h3>{{ equipment.type }}</h3>
+                <span class="equipment-total">Total: {{ equipment.count }} units</span>
+              </div>
+            </div>
+            
+            <!-- Status Indicators (Good/Broken/In Repair) -->
+            <div class="equipment-stats">
+              <div class="stat-item good">
+                <div class="stat-dot"></div>
+                <span class="stat-label">Good</span>
+                <strong class="stat-number">{{ equipment.goodCount }}</strong>
+              </div>
+              <div class="stat-item broken">
+                <div class="stat-dot"></div>
+                <span class="stat-label">Broken</span>
+                <strong class="stat-number">{{ equipment.brokenCount }}</strong>
+              </div>
+              <div class="stat-item repair">
+                <div class="stat-dot"></div>
+                <span class="stat-label">In Repair</span>
+                <strong class="stat-number">{{ equipment.inRepairCount }}</strong>
+              </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="health-bars">
+              <div class="health-bar good" [style.width.%]="(equipment.goodCount / equipment.count) * 100"></div>
+              <div class="health-bar broken" [style.width.%]="(equipment.brokenCount / equipment.count) * 100"></div>
+              <div class="health-bar repair" [style.width.%]="(equipment.inRepairCount / equipment.count) * 100"></div>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="equipment-actions">
+              <button class="action-btn view-details-btn" (click)="$event.stopPropagation(); openEquipmentTypeDetail(equipment)">
+                <i class="fas fa-eye"></i>
+                <span>View Details</span>
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+            
+            <!-- Simple Info Message -->
+            <div class="card-footer">
+              <i class="fas fa-info-circle"></i>
+              <span>Click to view all equipment details</span>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- Equipment Type Detail View -->
+        <div *ngIf="showEquipmentTypeDetail && equipmentTypeDetailData" class="equipment-type-detail-overlay">
+          <div class="equipment-type-detail-container">
+            <div class="detail-header-actions">
+              <button class="back-btn" (click)="closeEquipmentTypeDetail()">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Equipment List</span>
+              </button>
+            </div>
+            <ngx-equipment-type-detail 
+              [typeDetail]="equipmentTypeDetailData"
+              [missionId]="missionId">
+            </ngx-equipment-type-detail>
+          </div>
+        </div>
+
+        <!-- Pagination for Equipment -->
+        <div class="pagination-container" *ngIf="filteredEquipmentList.length > pageSize">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+            {{ Math.min(currentPage * pageSize, filteredEquipmentList.length) }} 
+            of {{ filteredEquipmentList.length }} items
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="goToFirstPage()" [disabled]="currentPage === 1" title="First page">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1" title="Previous">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages" title="Next">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="page-btn" (click)="goToLastPage()" [disabled]="currentPage === totalPages" title="Last page">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources Tab -->
+      <div *ngIf="selectedTab === 'resources'" class="resources-tab">
+        <div class="resources-header">
+          <div class="search-bar-container">
+            <div class="search-input-wrapper">
+              <i class="fas fa-search"></i>
+              <input 
+                type="text" 
+                class="search-input"
+                placeholder="Search resources..." 
+                [(ngModel)]="resourceSearchTerm"
+                (input)="filterResources()"
+              />
+              <button *ngIf="resourceSearchTerm" class="clear-search" (click)="resourceSearchTerm = ''; filterResources()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="search-stats" *ngIf="resourceSearchTerm">
+              Found {{ filteredResourcesList.length }} of {{ resourcesList.length }} resources
+            </div>
+          </div>
+          <button class="add-consumption-btn" (click)="openConsumptionModal()">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add Consumption</span>
+          </button>
+        </div>
+
+        <!-- Resource Summary Cards -->
+        <div class="resources-summary" *ngIf="missionResourceSummary">
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-database"></i></div>
+            <div class="summary-info">
+              <div class="summary-label">Total Allocated</div>
+              <div class="summary-value">{{ missionResourceSummary.totalAllocated | number }}</div>
+            </div>
+          </div>
+          <div class="summary-card consumed">
+            <div class="summary-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="summary-info">
+              <div class="summary-label">Total Consumed</div>
+              <div class="summary-value">{{ missionResourceSummary.totalConsumed | number }}</div>
+            </div>
+          </div>
+          <div class="summary-card remaining">
+            <div class="summary-icon"><i class="fas fa-clock"></i></div>
+            <div class="summary-info">
+              <div class="summary-label">Remaining</div>
+              <div class="summary-value">{{ missionResourceSummary.totalRemaining | number }}</div>
+            </div>
+          </div>
+          <div class="summary-card cost">
+            <div class="summary-icon"><i class="fas fa-coins"></i></div>
+            <div class="summary-info">
+              <div class="summary-label">Total Cost</div>
+              <div class="summary-value">{{ formatCurrency(missionResourceSummary.totalCost) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resource Cards with Consumption History (Paginated) -->
+        <div class="resources-grid">
+          <div *ngFor="let res of paginatedFilteredResourcesList" class="resource-card-expanded">
+            <div class="resource-card-header" (click)="toggleResourceDetails(res.resourceId)">
+              <div class="resource-icon" [class.warning]="res.remaining <= res.allocated * 0.1" [class.danger]="res.remaining === 0">
+                <i class="fas fa-boxes"></i>
+              </div>
+              <div class="resource-info">
+                <h4>{{ res.name }}</h4>
+                <span class="resource-unit">{{ res.unit }}</span>
+              </div>
+              <div class="resource-stats-compact">
+                <div class="stat-badge allocated">
+                  <i class="fas fa-tag"></i> {{ res.allocated | number }}
+                </div>
+                <div class="stat-badge consumed">
+                  <i class="fas fa-chart-line"></i> {{ res.consumed | number }}
+                </div>
+                <div class="stat-badge remaining" [class.low]="res.remaining < res.allocated * 0.2">
+                  <i class="fas fa-clock"></i> {{ res.remaining | number }}
+                </div>
+              </div>
+              <i class="fas" [class.fa-chevron-down]="!isResourceExpanded(res.resourceId)" 
+                 [class.fa-chevron-up]="isResourceExpanded(res.resourceId)"></i>
+            </div>
+            
+            <div class="resource-progress-section">
+              <div class="resource-progress-bar">
+                <div class="progress-fill consumed" [style.width.%]="(res.consumed / res.allocated) * 100"></div>
+                <div class="progress-fill remaining" [style.width.%]="(res.remaining / res.allocated) * 100"></div>
+              </div>
+              <div class="resource-percentage">
+                {{ ((res.consumed / res.allocated) * 100).toFixed(1) }}% consumed
+              </div>
+            </div>
+            
+            <div class="resource-card-body" *ngIf="isResourceExpanded(res.resourceId)">
+              <div class="consumption-history">
+                <div class="history-header">
+                  <h5><i class="fas fa-history"></i> Consumption History</h5>
+                  <span class="history-count">{{ res.consumptions?.length || 0 }} records</span>
+                </div>
+                
+                <div class="history-list" *ngIf="res.consumptions?.length > 0">
+                  <div *ngFor="let cons of res.consumptions" class="history-item">
+                    <div class="history-date">
+                      <i class="far fa-calendar-alt"></i>
+                      {{ cons.date | date:'mediumDate' }}
+                    </div>
+                    <div class="history-details">
+                      <div class="history-quantity">
+                        <i class="fas fa-layer-group"></i>
+                        {{ cons.quantity | number }} {{ res.unit }}
+                      </div>
+                      <div class="history-tags">
+                        <span class="tag motif" *ngIf="cons.motifCode">
+                          <i class="fas fa-tag"></i> {{ cons.motifCode }}
+                        </span>
+                        <span class="tag contexte" *ngIf="cons.contexteTitle">
+                          <i class="fas fa-folder"></i> {{ cons.contexteTitle }}
+                        </span>
+                      </div>
+                      <div class="history-cost">
+                        <i class="fas fa-coins"></i>
+                        {{ formatCurrency(cons.totalCost) }}
+                      </div>
+                      <div class="history-description" *ngIf="cons.description">
+                        <i class="fas fa-comment"></i>
+                        {{ cons.description }}
+                      </div>
+                    </div>
+                    <button class="delete-history-btn" (click)="deleteConsumption(cons.id, res.name)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="no-history" *ngIf="!res.consumptions || res.consumptions.length === 0">
+                  <i class="fas fa-chart-line"></i>
+                  <p>No consumption records yet</p>
+                  <small>Click "Add Consumption" to record resource usage</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination for Resources -->
+        <div class="pagination-container" *ngIf="filteredResourcesList.length > pageSize">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+            {{ Math.min(currentPage * pageSize, filteredResourcesList.length) }} 
+            of {{ filteredResourcesList.length }} items
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="goToFirstPage()" [disabled]="currentPage === 1" title="First page">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1" title="Previous">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages" title="Next">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="page-btn" (click)="goToLastPage()" [disabled]="currentPage === totalPages" title="Last page">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+<!-- Team Tab -->
+<div *ngIf="selectedTab === 'team'" class="team-tab">
+  
+  <!-- Header with Action Buttons - ONLY for authorized users -->
+  <div class="team-header">
+    <div class="team-header-info">
+      <h3><i class="fas fa-users"></i> Mission Team</h3>
+      <span class="team-count">{{ missionTeam?.totalMembers || 0 }} members</span>
+    </div>
+    <!-- Only show action buttons for Gestionnaire and Admin -->
+    <div class="team-actions" *ngIf="canManageTeams">
+      <button class="add-team-btn" (click)="openCreateTeamModal()">
+        <i class="fas fa-plus-circle"></i>
+        <span>Create Team</span>
+      </button>
+      <button class="add-member-btn" (click)="openAddMemberModal()">
+        <i class="fas fa-user-plus"></i>
+        <span>Add Members</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Teams Overview Cards - Horizontal Scroll -->
+  <div class="equipes-scroll-container">
+    <div class="equipes-overview" *ngIf="missionTeam?.equipes?.length">
+     <div *ngFor="let equipe of missionTeam.equipes" class="equipe-summary-card" 
+     (click)="viewEquipeDetail(equipe.id)">
+        
+        <div class="equipe-icon" [class]="getEquipeIconClass(equipe.type)">
+          <i [class]="getEquipeIcon(equipe.type)"></i>
+        </div>
+        <div class="equipe-info">
+          <h4>{{ equipe.nom }}</h4>
+          <span class="equipe-type">{{ equipe.type }}</span>
+        </div>
+        <div class="equipe-stats">
+          <span class="member-count">
+            <i class="fas fa-user"></i> {{ equipe.memberCount }}
+          </span>
+        </div>
+        
+        <!-- Only show action buttons for Gestionnaire and Admin -->
+        <div class="equipe-actions" *ngIf="canManageTeams">
+          <button class="action-icon manage" (click)="$event.stopPropagation(); openManageEquipeMembers(equipe)" title="Manage Members">
+            <i class="fas fa-users"></i>
+          </button>
+          <button class="action-icon edit" (click)="$event.stopPropagation(); openEditEquipeModal(equipe)" title="Edit Team">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="action-icon delete" (click)="$event.stopPropagation(); deleteEquipe(equipe)" title="Delete Team">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Unassigned Members Section -->
+<div class="equipe-group unassigned-group" *ngIf="unassignedMembersList.length > 0">
+  <div class="equipe-group-header">
+    <div class="equipe-group-title">
+      <i class="fas fa-user-clock"></i>
+      <h4>Unassigned</h4>
+      <span class="badge">{{ unassignedMembersList.length }}</span>
+    </div>
+  </div>
+  
+  <div class="members-grid">
+    <div *ngFor="let member of paginatedUnassignedMembers" class="member-card unassigned" (click)="viewEmployeeProfile(member.id, member.prenom, member.nom)">
+      <div class="member-avatar">
+        <div class="avatar-placeholder" [style.background]="getAvatarColor(member.id)">
+          {{ member.prenom?.charAt(0) }}{{ member.nom?.charAt(0) }}
+        </div>
+        <div class="online-status" [class.online]="true"></div>
+      </div>
+      <div class="member-info">
+        <h5>{{ member.prenom }} {{ member.nom }}</h5>
+        <!-- Display fonction -->
+        <div class="member-fonction" *ngIf="member.fonctionNom">
+          <i class="fas fa-briefcase"></i>
+          <span>{{ member.fonctionNom }}</span>
+        </div>
+        <div class="member-fonction" *ngIf="!member.fonctionNom">
+          <i class="fas fa-briefcase"></i>
+          <span class="no-fonction">No function assigned</span>
+        </div>
+        <div class="member-contact">
+          <a [href]="'mailto:' + member.email" class="contact-link" (click)="$event.stopPropagation()" title="Send Email">
+            <i class="fas fa-envelope"></i>
+          </a>
+          <a [href]="'tel:' + member.numTel" class="contact-link" (click)="$event.stopPropagation()" title="Call">
+            <i class="fas fa-phone"></i>
+          </a>
+        </div>
+      </div>
+      <!-- Only show action buttons for Gestionnaire and Admin -->
+      <div class="member-actions" *ngIf="canManageTeams" (click)="$event.stopPropagation()">
+        <div class="team-selector" *ngIf="editingEmployeeId === member.id">
+          <select [(ngModel)]="tempEquipeId" class="team-select">
+            <option [value]="null">-- Select Team --</option>
+            <option *ngFor="let eq of missionTeam?.equipes" [value]="eq.id">
+              {{ eq.nom }} ({{ eq.type }})
+            </option>
+          </select>
+          <button class="save-team-btn" (click)="saveEmployeeTeam(member.id)">
+            <i class="fas fa-check"></i>
+          </button>
+          <button class="cancel-team-btn" (click)="cancelEditEmployeeTeam()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <ng-template #normalActionsUnassigned>
+          <button class="action-icon edit-team" (click)="startEditEmployeeTeam(member.id, null)" title="Assign to Team">
+            <i class="fas fa-user-plus"></i>
+          </button>
+          <button class="action-icon remove" (click)="removeEmployee(member.id, member.prenom + ' ' + member.nom)" title="Remove from Mission">
+            <i class="fas fa-user-minus"></i>
+          </button>
+        </ng-template>
+      </div>
+      
+      <!-- Read-only view for unauthorized users -->
+      <div class="member-actions-readonly" *ngIf="!canManageTeams">
+        <span class="readonly-badge">
+          <i class="fas fa-lock"></i>
+          Read Only
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Pagination for Unassigned Members -->
+  <div class="pagination-container" *ngIf="unassignedMembersList.length > unassignedPageSize">
+    <!-- pagination controls -->
+    <div class="pagination-info">
+      Showing {{ (unassignedCurrentPage - 1) * unassignedPageSize + 1 }} - 
+      {{ Math.min(unassignedCurrentPage * unassignedPageSize, unassignedMembersList.length) }} 
+      of {{ unassignedMembersList.length }} members
+    </div>
+    
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="goToFirstUnassignedPage()" [disabled]="unassignedCurrentPage === 1">
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button class="page-btn" (click)="previousUnassignedPage()" [disabled]="unassignedCurrentPage === 1">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <div class="page-numbers">
+        <button *ngFor="let page of getUnassignedPageNumbers()" class="page-num" 
+                [class.active]="page === unassignedCurrentPage" 
+                (click)="goToUnassignedPage(page)">
+          {{ page }}
+        </button>
+      </div>
+      <button class="page-btn" (click)="nextUnassignedPage()" [disabled]="unassignedCurrentPage === unassignedTotalPages">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <button class="page-btn" (click)="goToLastUnassignedPage()" [disabled]="unassignedCurrentPage === unassignedTotalPages">
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- Empty State -->
+  <div class="empty-team-state" *ngIf="!missionTeam?.members?.length">
+    <i class="fas fa-users-slash"></i>
+    <h4>No Team Members</h4>
+    <p>This mission doesn't have any team members yet.</p>
+    <button *ngIf="canManageTeams" class="add-member-btn primary" (click)="openAddMemberModal()">
+      <i class="fas fa-user-plus"></i> Add First Member
+    </button>
+  </div>
+</div>
+
+<!-- Create/Edit Team Modal (Simplified) -->
+<div class="modal-overlay" *ngIf="showCreateEditTeamModal" (click)="closeCreateEditTeamModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas" [class.fa-plus-circle]="!editingEquipe" [class.fa-edit]="editingEquipe"></i> 
+        {{ editingEquipe ? 'Edit Team' : 'Create New Team' }}
+      </h5>
+      <button class="close-btn" (click)="closeCreateEditTeamModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form [formGroup]="equipeForm" (ngSubmit)="saveEquipe()">
+      <div class="modal-body">
+        <div class="form-field">
+          <label>Team Name *</label>
+          <input type="text" formControlName="nom" class="form-input" 
+                 placeholder="e.g., Alpha Team, Survey Team" autofocus>
+        </div>
+        
+        <div class="form-field">
+          <label>Activity Type *</label>
+          <select formControlName="type" class="form-input">
+            <option value="TOPOGRAPHIE">Topographie</option>
+            <option value="LAYONNAGE">Layonnage</option>
+            <option value="ENERGISREMENT">Energissement</option>
+            <option value="POSE">Pose</option>
+            <option value="RAMASSAGE">Ramassage</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" (click)="closeCreateEditTeamModal()">Cancel</button>
+        <button type="submit" class="confirm-btn" [disabled]="equipeForm.invalid">
+          <i class="fas" [class.fa-plus]="!editingEquipe" [class.fa-save]="editingEquipe"></i>
+          {{ editingEquipe ? 'Update Team' : 'Create Team' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Add Member Modal -->
+<div class="modal-overlay" *ngIf="showAddMemberModal" (click)="closeAddMemberModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-user-plus"></i> Add Team Members</h5>
+      <button class="close-btn" (click)="closeAddMemberModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Selected Count -->
+      <div class="selected-count" *ngIf="selectedEmployees.length > 0">
+        <i class="fas fa-check-circle"></i>
+        {{ selectedEmployees.length }} employee(s) selected
+      </div>
+
+      <!-- Team Selection -->
+      <div class="form-field">
+        <label>Assign to Team (Optional)</label>
+        <select [(ngModel)]="selectedEquipeId" class="form-input">
+          <option [value]="null">-- Select Team --</option>
+          <option *ngFor="let equipe of equipes" [value]="equipe.id">
+            {{ equipe.nom }} ({{ equipe.type }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Employees List -->
+      <div class="employees-list">
+        <div class="list-header">
+          <span>Available Employees</span>
+          <span>Status</span>
+        </div>
+        <div *ngFor="let emp of availableEmployees" class="employee-item" 
+             [class.selected]="isEmployeeSelected(emp)"
+             [class.unavailable]="!emp.available"
+             (click)="emp.available && toggleEmployeeSelection(emp)">
+          <div class="employee-check">
+            <i class="fas" [class.fa-check-square]="isEmployeeSelected(emp)" 
+               [class.fa-square]="!isEmployeeSelected(emp)"></i>
+          </div>
+          <div class="employee-avatar">
+            <div class="avatar-small">
+              {{ emp.prenom?.charAt(0) }}{{ emp.nom?.charAt(0) }}
+            </div>
+          </div>
+          <div class="employee-info">
+            <div class="employee-name">{{ emp.prenom }} {{ emp.nom }}</div>
+            <!-- REMOVED: emp.poste from details, show email and phone instead -->
+            <div class="employee-details">
+              <span *ngIf="emp.email">{{ emp.email }}</span>
+              <span *ngIf="emp.email && emp.numTel"> • </span>
+              <span *ngIf="emp.numTel">{{ emp.numTel }}</span>
+            </div>
+          </div>
+          <div class="employee-status">
+            <span class="status-badge" [class.available]="emp.available" 
+                  [class.unavailable]="!emp.available">
+              <i class="fas" [class.fa-check]="emp.available" [class.fa-clock]="!emp.available"></i>
+              {{ emp.available ? 'Available' : 'In Mission' }}
+            </span>
+            <div class="mission-info" *ngIf="!emp.available && emp.currentMissionName">
+              <small>{{ emp.currentMissionName }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddMemberModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitAddMembers()" [disabled]="selectedEmployees.length === 0">
+        <i class="fas fa-user-plus"></i> Add {{ selectedEmployees.length }} Member(s)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Team Details Modal -->
+<div class="modal-overlay" *ngIf="showTeamDetailsModal" (click)="closeTeamDetailsModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-users"></i> Team Members</h5>
+      <button class="close-btn" (click)="closeTeamDetailsModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="team-members-list">
+        <div *ngFor="let member of selectedEquipeMembers" class="team-member-item">
+          <div class="member-avatar-small">
+            {{ member.prenom?.charAt(0) }}{{ member.nom?.charAt(0) }}
+          </div>
+          <div class="member-info">
+            <div class="member-name">{{ member.prenom }} {{ member.nom }}</div>
+                <!-- ADD THIS -->
+    <div class="member-fonction-small" *ngIf="member.fonctionNom">
+      <i class="fas fa-briefcase"></i> {{ member.fonctionNom }}
+    </div>
+            <!-- REMOVED: member.poste line -->
+          </div>
+          <div class="member-contact-info">
+            <a [href]="'mailto:' + member.email" class="contact-link" title="Send Email">
+              <i class="fas fa-envelope"></i>
+            </a>
+            <a [href]="'tel:' + member.numTel" class="contact-link" title="Call">
+              <i class="fas fa-phone"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeTeamDetailsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Manage Equipe Members Modal -->
+<div class="modal-overlay" *ngIf="showEquipeMembersModal" (click)="closeEquipeMembersModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-users"></i> Manage Members - {{ selectedEquipeForMembers?.nom }}</h5>
+      <button type="button" class="close-btn" (click)="closeEquipeMembersModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button class="filter-tab" [class.active]="selectedMemberFilter === 'all'" (click)="selectedMemberFilter = 'all'">
+          <i class="fas fa-users"></i>
+          <span>All Members</span>
+          <span class="count">{{ availableEmployeesForAssignment.length }}</span>
+        </button>
+        <button class="filter-tab" [class.active]="selectedMemberFilter === 'assigned'" (click)="selectedMemberFilter = 'assigned'">
+          <i class="fas fa-check-circle"></i>
+          <span>Assigned to Team</span>
+          <span class="count">{{ getAssignedMembersCount() }}</span>
+        </button>
+        <button class="filter-tab" [class.active]="selectedMemberFilter === 'not-assigned'" (click)="selectedMemberFilter = 'not-assigned'">
+          <i class="fas fa-user-plus"></i>
+          <span>Not Assigned</span>
+          <span class="count">{{ getNotAssignedMembersCount() }}</span>
+        </button>
+      </div>
+
+      <!-- Selected Count -->
+      <div class="selected-count" *ngIf="selectedEmployeesForEquipe.length > 0">
+        <i class="fas fa-check-circle"></i>
+        {{ selectedEmployeesForEquipe.length }} member(s) selected for this team
+      </div>
+
+      <!-- Employees List - filtered -->
+      <div class="employees-list">
+        <div class="list-header">
+          <span>Employee</span>
+          <span>Current Team</span>
+        </div>
+        <div *ngFor="let emp of getFilteredMembersForAssignment()" class="employee-item" 
+             [class.selected]="isEmployeeSelectedForEquipe(emp)"
+             [class.current-team-member]="isEmployeeInCurrentTeam(emp.id)"
+             (click)="toggleEmployeeForEquipe(emp)">
+          <div class="employee-check">
+            <i class="fas" [class.fa-check-square]="isEmployeeSelectedForEquipe(emp)" 
+               [class.fa-square]="!isEmployeeSelectedForEquipe(emp)"></i>
+          </div>
+          <div class="employee-avatar">
+            <div class="avatar-small" [style.background]="getAvatarColor(emp.id)">
+              {{ emp.prenom?.charAt(0) }}{{ emp.nom?.charAt(0) }}
+            </div>
+          </div>
+          <div class="employee-info">
+            <div class="employee-name">{{ emp.prenom }} {{ emp.nom }}</div>
+            <div class="employee-details">{{ emp.email }} • {{ emp.numTel }}</div>
+          </div>
+          <div class="employee-status">
+            <!-- Show current team assignment -->
+            <div class="team-info" [class.no-team]="!getEmployeeTeamName(emp.id)">
+              <i class="fas" [class.fa-users]="getEmployeeTeamName(emp.id)" [class.fa-user-plus]="!getEmployeeTeamName(emp.id)"></i>
+              <small *ngIf="getEmployeeTeamName(emp.id)">Current: {{ getEmployeeTeamName(emp.id) }}</small>
+              <small *ngIf="!getEmployeeTeamName(emp.id)" class="no-team-text">Not assigned</small>
+            </div>
+            <!-- Show badge if currently in this team -->
+            <div class="current-team-badge" *ngIf="isEmployeeInCurrentTeam(emp.id)">
+              <i class="fas fa-check-circle"></i> Already in {{ selectedEquipeForMembers?.nom }}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Empty state -->
+      <div class="empty-mission-members" *ngIf="getFilteredMembersForAssignment().length === 0">
+        <i class="fas fa-users-slash"></i>
+        <p *ngIf="selectedMemberFilter === 'all'">No members found in this mission</p>
+        <p *ngIf="selectedMemberFilter === 'assigned'">No members assigned to any team</p>
+        <p *ngIf="selectedMemberFilter === 'not-assigned'">All members are already assigned to teams</p>
+        <small>Add members to the mission first using "Add Members" button</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="cancel-btn" (click)="closeEquipeMembersModal()">Cancel</button>
+      <button type="button" class="confirm-btn" (click)="saveEquipeMembers()">
+        <i class="fas fa-save"></i> Save Members
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Activities Tab -->
+<div *ngIf="selectedTab === 'actives'" class="actives-tab">
+  <div class="actives-header">
+    <div class="actives-title">
+      <h3><i class="fas fa-tasks"></i> Activities</h3>
+      <span class="actives-count">{{ filteredActivesList.length }} activities</span>
+    </div>
+    <div class="actives-actions">
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input 
+          type="text" 
+          placeholder="Search activities..." 
+          [(ngModel)]="activeSearchTerm"
+          (input)="filterActives()"
+        />
+        <button *ngIf="activeSearchTerm" class="clear-search" (click)="activeSearchTerm = ''; filterActives()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <!-- Only show Create Activity button for Gestionnaire and Admin -->
+      <button *ngIf="canManageActivities" class="create-active-btn" (click)="openCreateActiveModal()">
+        <i class="fas fa-plus-circle"></i>
+        <span>Create Activity</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Activities Grid with Pagination -->
+  <div class="actives-grid">
+    <div *ngFor="let active of paginatedFilteredActivesList" class="active-card">
+      
+      <!-- Hover Action Buttons - Only for authorized users -->
+      <div class="active-card-actions" *ngIf="canManageActivities">
+        <button class="action-btn edit-btn" (click="$event.stopPropagation(); openEditActiveModal(active)" title="Edit Activity">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="action-btn delete-btn" (click="$event.stopPropagation(); deleteActive(active, $event)" title="Delete Activity">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+      
+      <div class="active-card-header">
+        <div class="active-icon">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="active-info">
+          <h4>{{ active.codeActive }}</h4>
+          <p class="active-objectif">{{ active.objectif }}</p>
+        </div>
+        <div class="active-badge">
+          <i class="fas fa-users"></i>
+          <span>{{ active.equipeCount }} Teams</span>
+        </div>
+      </div>
+      
+      <div class="active-card-body">
+        <p class="active-description">{{ active.description || 'No description provided' }}</p>
+      </div>
+      
+      <!-- Footer buttons (visible on mobile) - Only for authorized users -->
+      <div class="active-card-footer" *ngIf="canManageActivities">
+        <button class="edit-active-btn" (click)="openEditActiveModal(active)">
+          <i class="fas fa-edit"></i>
+          <span>Edit</span>
+        </button>
+        <button class="delete-active-btn" (click)="deleteActive(active, $event)">
+          <i class="fas fa-trash-alt"></i>
+          <span>Delete</span>
+        </button>
+      </div>
+      
+      <!-- Read-only badge for unauthorized users -->
+      <div class="active-card-readonly" *ngIf="!canManageActivities">
+        <div class="readonly-badge">
+          <i class="fas fa-lock"></i>
+          <span>Read Only</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination for Activities -->
+  <div class="pagination-container" *ngIf="filteredActivesList.length > pageSize">
+    <div class="pagination-info">
+      Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+      {{ Math.min(currentPage * pageSize, filteredActivesList.length) }} 
+      of {{ filteredActivesList.length }} activities
+    </div>
+    
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="goToFirstPage()" [disabled]="currentPage === 1">
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      
+      <div class="page-numbers">
+        <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </div>
+      
+      <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <button class="page-btn" (click)="goToLastPage()" [disabled]="currentPage === totalPages">
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="filteredActivesList.length === 0" class="empty-state">
+    <i class="fas fa-tasks-slash"></i>
+    <p>No activities found</p>
+    <button *ngIf="canManageActivities" class="create-active-btn primary" (click)="openCreateActiveModal()">
+      <i class="fas fa-plus-circle"></i> Create First Activity
+    </button>
+  </div>
+</div>
+
+
+      <!-- Finance Tab -->
+      <div *ngIf="selectedTab === 'finance'" class="finance-tab">
+        <div class="finance-grid">
+          <div class="budget-card">
+            <h4>Budget Overview</h4>
+            <div class="budget-numbers">
+              <div class="budget-item">
+                <span>Total Budget</span>
+                <strong class="total">{{ formatCurrency(mission.financial.budget) }}</strong>
+              </div>
+              <div class="budget-item">
+                <span>Spent</span>
+                <strong class="spent">{{ formatCurrency(mission.financial.spent) }}</strong>
+              </div>
+              <div class="budget-item">
+                <span>Remaining</span>
+                <strong class="remaining">{{ formatCurrency(mission.financial.remaining) }}</strong>
+              </div>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="progress-fill" [style.width.%]="(mission.financial.spent / mission.financial.budget) * 100"></div>
+            </div>
+            <span class="used-percentage">{{ ((mission.financial.spent / mission.financial.budget) * 100).toFixed(1) }}% Used</span>
+          </div>
+          
+          <div class="breakdown-card">
+            <h4>Cost Breakdown</h4>
+            <div class="breakdown-list">
+              <div *ngFor="let item of mission.financial.breakdown" class="breakdown-item">
+                <div class="breakdown-label">
+                  <span class="color-dot" [style.background]="item.color"></span>
+                  <span>{{ item.category }}</span>
+                </div>
+                <strong>{{ formatCurrency(item.amount) }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Consumption Modal with Manual Motif and Contexte Entry -->
+<div class="modal-overlay" *ngIf="showConsumptionModal" (click)="closeConsumptionModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-plus-circle"></i> Add Resource Consumption</h5>
+      <button class="close-btn" (click)="closeConsumptionModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="consumptionForm">
+      
+      <!-- Resource with Search -->
+      <div class="form-field">
+        <label>Resource *</label>
+        <div class="searchable-dropdown">
+          <input 
+            type="text"
+            class="form-input"
+            placeholder="Search resource..."
+            [(ngModel)]="resourceSearchInput"
+            [ngModelOptions]="{standalone: true}"
+            (input)="filterAvailableResources()"
+            (focus)="showResourceDropdown = true"
+            (blur)="closeResourceDropdown()"
+          />
+          <div class="dropdown-list" *ngIf="showResourceDropdown && filteredAvailableResources.length > 0">
+            <div 
+              *ngFor="let res of filteredAvailableResources" 
+              class="dropdown-item"
+              (click)="selectResource(res)"
+              [class.selected]="selectedResourceForConsumption?.resourceId === res.resourceId"
+            >
+              <div class="dropdown-item-info">
+                <strong>{{ res.resourceName }}</strong>
+                <span class="dropdown-item-detail">{{ res.remaining | number }} {{ res.unit }} remaining</span>
+              </div>
+              <div class="dropdown-item-cost">{{ formatCurrency(res.costPerUnit) }}/{{ res.unit }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Selected Resource Info -->
+      <div class="selected-resource-info" *ngIf="selectedResourceForConsumption">
+        <div class="info-row">
+          <span class="info-label">Selected Resource:</span>
+          <span class="info-value">{{ selectedResourceForConsumption.resourceName }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Available Quantity:</span>
+          <span class="info-value available">{{ selectedResourceForConsumption.remaining | number }} {{ selectedResourceForConsumption.unit }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Cost per Unit:</span>
+          <span class="info-value">{{ formatCurrency(selectedResourceForConsumption.costPerUnit) }}</span>
+        </div>
+      </div>
+      
+      <!-- Quantity -->
+      <div class="form-field">
+        <label>Quantity Consumed *</label>
+        <input type="number" formControlName="quantity" class="form-input" 
+               [max]="selectedResourceForConsumption?.remaining"
+               step="0.01" placeholder="Enter quantity">
+        <small *ngIf="selectedResourceForConsumption">
+          Max: {{ selectedResourceForConsumption.remaining | number }} {{ selectedResourceForConsumption.unit }}
+        </small>
+      </div>
+      
+      <!-- Date -->
+      <div class="form-field">
+        <label>Date *</label>
+        <input type="date" formControlName="date" class="form-input">
+      </div>
+      
+      <!-- Motif - Manual Entry -->
+      <div class="form-field">
+        <label>Motif / Reason</label>
+        <input type="text" formControlName="motifCode" class="form-input" placeholder="e.g., PRODUCTION, MAINTENANCE, OFFICE">
+        <small>Enter a code/reason for consumption (e.g., PRODUCTION, REPAIR, DAILY_USE)</small>
+      </div>
+      
+      <div class="form-field">
+        <label>Motif Description</label>
+        <input type="text" formControlName="motifDescription" class="form-input" placeholder="Detailed reason for consumption">
+      </div>
+      
+      <!-- Contexte - Manual Entry -->
+      <div class="form-field">
+        <label>Contexte / Context</label>
+        <input type="text" formControlName="contexteTitle" class="form-input" placeholder="e.g., PRODUCTION_LINE, MAINTENANCE_SESSION">
+        <small>Enter the context/situation (e.g., DAILY_OPERATION, EMERGENCY_REPAIR)</small>
+      </div>
+      
+      <div class="form-field">
+        <label>Contexte Description</label>
+        <input type="text" formControlName="contexteDescription" class="form-input" placeholder="Detailed context description">
+      </div>
+      
+      <!-- Description -->
+      <div class="form-field">
+        <label>Notes / Description</label>
+        <textarea formControlName="description" rows="3" class="form-input" placeholder="Additional notes about this consumption..."></textarea>
+      </div>
+      
+      <!-- Cost Preview -->
+      <div class="consumption-preview" *ngIf="selectedResourceForConsumption && consumptionForm.get('quantity')?.value">
+        <div class="preview-title">Cost Preview</div>
+        <div class="preview-details">
+          <span>{{ consumptionForm.get('quantity')?.value | number }} {{ selectedResourceForConsumption.unit }} × {{ formatCurrency(selectedResourceForConsumption.costPerUnit) }}</span>
+          <strong>= {{ formatCurrency(consumptionForm.get('quantity')?.value * selectedResourceForConsumption.costPerUnit) }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeConsumptionModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitConsumption()" [disabled]="!isConsumptionFormValid()">
+        <i class="fas fa-save"></i> Record Consumption
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Breakdown Modal -->
+<div class="modal-overlay" *ngIf="showBreakdownModal" (click)="closeBreakdownModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>Declare Breakdown - {{ selectedEquipment?.type }}</h5>
+      <button class="close-btn" (click)="closeBreakdownModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="breakdownForm">
+      <div class="form-field">
+        <label>Available Units: <strong>{{ selectedEquipment?.goodCount }}</strong></label>
+      </div>
+      <div class="form-field">
+        <label>Failure Date *</label>
+        <input type="date" formControlName="datePanne" class="form-input">
+      </div>
+  <div class="form-field">
+  <label>Equipment Status</label>
+  <div class="info-message">
+    <i class="fas fa-info-circle"></i>
+    <span>This equipment will be marked as broken</span>
+  </div>
+</div>
+      <div class="form-field">
+        <label>Problem Description</label>
+        <textarea formControlName="detailProbleme" rows="3" class="form-input" placeholder="Describe the issue..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeBreakdownModal()">Cancel</button>
+      <button class="confirm-btn" (click)="declareBreakdown()" [disabled]="breakdownForm.invalid">
+        <i class="fas fa-exclamation-triangle"></i> Declare Breakdown
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Launch Repair Modal -->
+<div class="modal-overlay" *ngIf="showLaunchRepairModal" (click)="closeLaunchRepairModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>Launch Repair</h5>
+      <button class="close-btn" (click)="closeLaunchRepairModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="launchRepairForm">
+      <div class="repair-options">
+        <label class="option-card" [class.selected]="launchRepairForm.get('type')?.value === 'INTERNE'">
+          <input type="radio" formControlName="type" value="INTERNE">
+          <div class="option-content">
+            <i class="fas fa-users"></i>
+            <strong>Internal Repair</strong>
+            <small>Repair by internal team</small>
+          </div>
+        </label>
+        <label class="option-card" [class.selected]="launchRepairForm.get('type')?.value === 'EXTERNE'">
+          <input type="radio" formControlName="type" value="EXTERNE">
+          <div class="option-content">
+            <i class="fas fa-building"></i>
+            <strong>External Repair</strong>
+            <small>Send to supplier</small>
+          </div>
+        </label>
+      </div>
+      
+      <div *ngIf="launchRepairForm.get('type')?.value === 'INTERNE'" class="dynamic-fields">
+        <div class="form-field">
+          <label>Technician Name *</label>
+          <input type="text" formControlName="technicien" class="form-input" placeholder="Enter technician name">
+        </div>
+      </div>
+      
+      <div *ngIf="launchRepairForm.get('type')?.value === 'EXTERNE'" class="dynamic-fields">
+        <div class="form-field">
+          <label>Supplier Name *</label>
+          <input type="text" formControlName="fournisseur" class="form-input" placeholder="Enter supplier name">
+        </div>
+        <div class="form-field">
+          <label>Date Sent to Supplier *</label>
+          <input type="date" formControlName="dateSortieChantier" class="form-input">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeLaunchRepairModal()">Cancel</button>
+      <button class="confirm-btn" (click)="launchRepair()" [disabled]="launchRepairForm.invalid">
+        <i class="fas fa-play"></i> Launch Repair
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Repair Modal -->
+<div class="modal-overlay" *ngIf="showCompleteRepairModal" (click)="closeCompleteRepairModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>Complete Repair</h5>
+      <button class="close-btn" (click)="closeCompleteRepairModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="completeRepairForm">
+      <div class="form-field">
+        <label>Repair Completion Date *</label>
+        <input type="date" formControlName="dateReparation" class="form-input">
+      </div>
+      <div class="form-field">
+        <label>Total Cost (DZD) *</label>
+        <input type="number" formControlName="cout" class="form-input" min="0" step="0.01" placeholder="Enter total cost">
+      </div>
+      <div *ngIf="selectedOngoingRepair?.type === 'EXTERNE'" class="form-field">
+        <label>Date Received from Supplier *</label>
+        <input type="date" formControlName="dateEntreeChantier" class="form-input">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeCompleteRepairModal()">Cancel</button>
+      <button class="confirm-btn" (click)="completeRepair()" [disabled]="completeRepairForm.invalid">
+        <i class="fas fa-check-circle"></i> Complete Repair
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Activity Modal -->
+<div class="modal-overlay" *ngIf="showActiveModal" (click)="closeActiveModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>
+        <i class="fas" [class.fa-plus-circle]="!editingActive" [class.fa-edit]="editingActive"></i>
+        {{ editingActive ? 'Edit Activity' : 'Create New Activity' }}
+      </h5>
+      <button class="close-btn" (click)="closeActiveModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form [formGroup]="activeForm" (ngSubmit)="submitActive()">
+      <div class="modal-body">
+        <div class="form-field">
+          <label>Activity Code *</label>
+          <input type="text" formControlName="codeActive" class="form-input" 
+                 placeholder="e.g., ACT-001, SURVEY-01" autofocus>
+          <small>Unique identifier for this activity</small>
+        </div>
+        
+        <div class="form-field">
+          <label>Objective *</label>
+          <input type="text" formControlName="objectif" class="form-input" 
+                 placeholder="e.g., Complete site survey, Install equipment">
+        </div>
+        
+        <div class="form-field">
+          <label>Description</label>
+          <textarea formControlName="description" rows="4" class="form-input" 
+                    placeholder="Detailed description of the activity..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" (click)="closeActiveModal()">Cancel</button>
+        <button type="submit" class="confirm-btn" [disabled]="activeForm.invalid">
+          <i class="fas" [class.fa-plus]="!editingActive" [class.fa-save]="editingActive"></i>
+          {{ editingActive ? 'Update Activity' : 'Create Activity' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Create Project Modal -->
+<div class="modal-overlay" *ngIf="showCreateProjectModal" (click)="closeCreateProjectModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-project-diagram"></i> Create New Project</h5>
+      <button class="close-btn" (click)="closeCreateProjectModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form [formGroup]="projectForm" (ngSubmit)="createProject()">
+      <div class="modal-body">
+        <div class="form-field">
+          <label>Project Name *</label>
+          <input type="text" formControlName="nom" class="form-input" 
+                 placeholder="e.g., Fiber Optic Installation - Phase 1" autofocus>
+        </div>
+        
+        <div class="form-field">
+          <label>Description *</label>
+          <textarea formControlName="description" rows="3" class="form-input" 
+                    placeholder="Detailed project description..."></textarea>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-field">
+            <label>Budget (DA) *</label>
+            <input type="number" formControlName="budget" class="form-input" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label>Target VP *</label>
+            <input type="number" formControlName="objectifVP" class="form-input" placeholder="0">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-field">
+            <label>Start Date *</label>
+            <input type="date" formControlName="objectifDebut" class="form-input">
+          </div>
+          <div class="form-field">
+            <label>End Date *</label>
+            <input type="date" formControlName="objectifFin" class="form-input">
+          </div>
+        </div>
+        
+        <div class="info-message">
+          <i class="fas fa-info-circle"></i>
+          <small>Only one active project is allowed per mission. This will become the current project.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" (click)="closeCreateProjectModal()">Cancel</button>
+        <button type="submit" class="confirm-btn" [disabled]="projectForm.invalid">
+          <i class="fas fa-plus"></i> Create Project
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

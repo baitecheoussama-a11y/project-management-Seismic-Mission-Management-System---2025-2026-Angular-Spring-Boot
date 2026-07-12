@@ -1,0 +1,419 @@
+@import '../../../@theme/styles/themes';
+
+@include nb-install-component() {
+  
+  .comptes-card {
+    box-shadow: nb-theme(card-shadow);
+    border-radius: nb-theme(card-border-radius);
+    
+    .card-header-custom {
+      background: linear-gradient(135deg, nb-theme(color-primary-500) 0%, nb-theme(color-primary-600) 100%);
+      color: white;
+      padding: 1.25rem 1.5rem;
+      border-bottom: none;
+      
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        
+        .title-section {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          
+          .header-icon {
+            font-size: 2rem;
+            width: 2rem;
+            height: 2rem;
+            color: white;
+          }
+          
+          .title-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+          }
+          
+          .card-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            
+            .specific-badge {
+              background: rgba(255, 255, 255, 0.2);
+              padding: 0.25rem 0.75rem;
+              border-radius: 20px;
+              font-size: 0.8rem;
+              font-weight: normal;
+            }
+          }
+          
+          .card-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            
+            .subtitle-icon {
+              font-size: 0.85rem;
+              width: 0.85rem;
+              height: 0.85rem;
+            }
+          }
+        }
+        
+        .back-btn {
+          background-color: rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          transition: all 0.3s ease;
+          
+          nb-icon {
+            margin-right: 0.5rem;
+          }
+          
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(-3px);
+          }
+        }
+      }
+    }
+    
+    .card-body-custom {
+      padding: 1.5rem;
+      background-color: nb-theme(background-basic-color-1);
+      
+      .info-message {
+        background: #e8f4fd;
+        border-left: 4px solid #0095ff;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        
+        nb-icon {
+          font-size: 1.25rem;
+          color: #0095ff;
+        }
+        
+        span {
+          font-size: 0.85rem;
+          color: #0050b3;
+          
+          strong {
+            font-weight: 600;
+          }
+        }
+      }
+      
+      .actions-toolbar {
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        
+        .reset-password-btn {
+          background: linear-gradient(135deg, #ff3d71 0%, #ff5c8a 100%);
+          border: none;
+          color: white;
+          padding: 0.5rem 1.25rem;
+          border-radius: 8px;
+          font-weight: 500;
+          transition: all 0.3s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          
+          nb-icon {
+            font-size: 1.1rem;
+          }
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 61, 113, 0.3);
+          }
+          
+          &:active:not(:disabled) {
+            transform: translateY(0);
+          }
+          
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+        
+        .selected-info {
+          font-size: 0.85rem;
+          color: nb-theme(text-hint-color);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          
+          nb-icon {
+            font-size: 1rem;
+            color: nb-theme(color-primary-500);
+          }
+          
+          strong {
+            color: nb-theme(text-basic-color);
+            font-weight: 600;
+          }
+        }
+      }
+      
+      ::ng-deep {
+        ng2-smart-table {
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            
+            thead tr {
+              background-color: nb-theme(background-basic-color-2);
+              
+              th {
+                padding: 1rem;
+                font-weight: 600;
+                font-size: 0.875rem;
+                color: nb-theme(text-basic-color);
+                border-bottom: 2px solid nb-theme(border-basic-color-3);
+                
+                &:first-child {
+                  border-top-left-radius: 8px;
+                }
+                
+                &:last-child {
+                  border-top-right-radius: 8px;
+                }
+              }
+            }
+            
+            tbody tr {
+              transition: all 0.2s ease;
+              cursor: pointer;
+              
+              &:hover {
+                background-color: nb-theme(background-basic-color-2);
+                transform: scale(1.01);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              }
+              
+              &.selected {
+                background-color: rgba(nb-theme(color-primary-500), 0.1);
+                border-left: 3px solid nb-theme(color-primary-500);
+              }
+              
+              td {
+                padding: 0.875rem 1rem;
+                border-bottom: 1px solid nb-theme(border-basic-color-2);
+                color: nb-theme(text-basic-color);
+              }
+            }
+          }
+          
+          .ng2-smart-actions {
+            a {
+              margin: 0 0.25rem;
+              transition: all 0.2s ease;
+              display: inline-flex;
+              align-items: center;
+              
+              &:hover {
+                transform: scale(1.1);
+              }
+            }
+            
+            .ng2-smart-action-add-add {
+              background-color: nb-theme(color-success-500);
+              color: white;
+              padding: 0.5rem 0.8rem;
+              border-radius: 4px;
+              
+              &:hover {
+                background-color: nb-theme(color-success-600);
+              }
+            }
+            
+            .ng2-smart-action-edit-edit {
+              color: nb-theme(color-warning-500);
+              
+              &:hover {
+                color: nb-theme(color-warning-600);
+              }
+            }
+            
+            .ng2-smart-action-delete-delete {
+              color: nb-theme(color-danger-500);
+              
+              &:hover {
+                color: nb-theme(color-danger-600);
+              }
+            }
+          }
+          
+          .ng2-smart-pagination {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            
+            .ng2-smart-page-link {
+              border-radius: 4px;
+              margin: 0 0.25rem;
+              transition: all 0.2s ease;
+              
+              &:hover {
+                background-color: nb-theme(color-primary-100);
+              }
+            }
+            
+            .active .ng2-smart-page-link {
+              background-color: nb-theme(color-primary-500);
+              color: white;
+              border-color: nb-theme(color-primary-500);
+            }
+          }
+          
+          // Filter inputs styling
+          .ng2-smart-filter {
+            input, select {
+              border: 1px solid nb-theme(border-basic-color-3);
+              border-radius: 4px;
+              padding: 0.5rem;
+              font-size: 0.875rem;
+              width: 100%;
+              transition: all 0.2s ease;
+              
+              &:focus {
+                outline: none;
+                border-color: nb-theme(color-primary-500);
+                box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-500), 0.2);
+              }
+            }
+          }
+          
+          // Editor styling
+          .ng2-smart-row-editing {
+            background-color: nb-theme(background-basic-color-2);
+            
+            td {
+              padding: 0.5rem;
+            }
+            
+            input, select {
+              border: 1px solid nb-theme(border-basic-color-3);
+              border-radius: 4px;
+              padding: 0.5rem;
+              width: 100%;
+              
+              &:focus {
+                outline: none;
+                border-color: nb-theme(color-primary-500);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ========================================== */
+/* 📱 RESPONSIVE STYLES */
+/* ========================================== */
+
+@media (max-width: 768px) {
+  .comptes-card {
+    .card-header-custom {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start !important;
+        
+        .title-section {
+          flex-direction: column;
+          align-items: flex-start !important;
+        }
+        
+        .back-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+    
+    .card-body-custom {
+      padding: 1rem !important;
+      
+      .actions-toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        
+        .reset-password-btn {
+          width: 100%;
+          justify-content: center;
+        }
+        
+        .selected-info {
+          justify-content: center;
+        }
+      }
+      
+      ::ng-deep {
+        .ng2-smart-actions {
+          a {
+            margin: 0 0.1rem !important;
+          }
+          
+          .ng2-smart-action-add-add {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.75rem;
+          }
+        }
+        
+        th, td {
+          padding: 0.5rem !important;
+          font-size: 0.75rem;
+        }
+        
+        input, select {
+          padding: 0.25rem !important;
+          font-size: 0.7rem !important;
+        }
+      }
+    }
+  }
+}
+
+/* ========================================== */
+/* ✨ ANIMATIONS */
+/* ========================================== */
+
+::ng-deep {
+  .comptes-card .card-body-custom ng2-smart-table tbody tr {
+    animation: fadeInRight 0.3s ease;
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

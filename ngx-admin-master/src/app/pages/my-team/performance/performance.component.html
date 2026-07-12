@@ -1,0 +1,436 @@
+<!-- pages/teams/performance/performance.component.html -->
+<div class="performance-container">
+  
+  <!-- Toggle Sidebar Button (Desktop) -->
+  <button class="toggle-sidebar-btn" (click)="toggleSidebar()" [class.collapsed]="sidebarCollapsed && !isMobile">
+    <nb-icon [icon]="sidebarCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+  </button>
+
+  <!-- Mobile Toggle Button -->
+  <button *ngIf="isMobile && sidebarCollapsed" class="mobile-toggle-btn" (click)="toggleSidebar()">
+    <nb-icon icon="menu-outline"></nb-icon>
+  </button>
+
+  <!-- Main Content Area -->
+  <div class="content-area" [class.sidebar-collapsed]="sidebarCollapsed && !isMobile">
+    
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading performance data...</p>
+    </div>
+
+    <!-- Welcome Message -->
+    <div *ngIf="!selectedEquipe && !isLoading" class="welcome-message">
+      <div class="welcome-card">
+        <nb-icon icon="bar-chart-outline" class="welcome-icon"></nb-icon>
+        <h2>Team Performance Dashboard</h2>
+        <p>Select a team from the sidebar to view its performance metrics</p>
+        <div class="stats-preview" *ngIf="equipes.length > 0">
+          <div class="stat-item">
+            <nb-icon icon="people-outline"></nb-icon>
+            <span>{{ equipes.length }} Teams</span>
+          </div>
+          <div class="stat-item">
+            <nb-icon icon="activity-outline"></nb-icon>
+            <span>{{ getTotalActivities() }} Total Activities</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Performance Content -->
+    <div *ngIf="selectedEquipe && !isLoading" class="team-content">
+      
+      <div class="content-header">
+        <div class="header-left">
+          <button class="back-btn" (click)="clearSelection()">
+            <nb-icon icon="arrow-back-outline"></nb-icon>
+            <span>Back to Teams</span>
+          </button>
+        </div>
+        
+        <div class="header-center">
+          <div class="team-icon-large" [style.backgroundColor]="getTypeColor(selectedEquipe.type)">
+            <i [class]="getTypeIcon(selectedEquipe.type)"></i>
+          </div>
+          <div class="team-info">
+            <h2>{{ selectedEquipe.nom }}</h2>
+            <span class="team-type-badge">{{ getTypeLabel(selectedEquipe.type) }}</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="toggle-sidebar-btn mobile-only" (click)="toggleSidebar()" *ngIf="isMobile">
+            <nb-icon icon="bar-chart-outline"></nb-icon>
+            <span>Teams</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Performance Dashboard -->
+      <div class="performance-dashboard">
+        
+        <!-- Stats Cards Row -->
+        <div class="stats-cards-row">
+          <div class="stat-card">
+            <div class="stat-icon productivity">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{ selectedEquipe.averageProductivity | number:'1.0-0' }}%</span>
+              <span class="stat-label">Average Productivity</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon hours">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{ totalWorkingHours | number:'1.0-0' }}</span>
+              <span class="stat-label">Total Working Hours</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon activities">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{ totalActivities }}</span>
+              <span class="stat-label">Activities</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon reports">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{ totalProductivityRecords }}</span>
+              <span class="stat-label">Productivity Records</span>
+            </div>
+          </div>
+        </div>
+
+   
+
+        <!-- Productivity Records Section -->
+        <div class="productivity-section">
+          <div class="section-header">
+            <div class="title-section">
+              <h3><i class="fas fa-table"></i> Productivity Records</h3>
+              <span class="record-count-badge">{{ filteredProductivityRecords.length }} records</span>
+            </div>
+            <button *ngIf="canManagePerformance" class="add-record-btn" (click)="openAddRecordModal()">
+              <nb-icon icon="plus-outline"></nb-icon>
+              <span>Add Record</span>
+            </button>
+          </div>
+
+          <!-- Search and Filters -->
+          <div class="filters-bar">
+            <div class="search-wrapper">
+              <i class="fas fa-search"></i>
+              <input 
+                type="text" 
+                placeholder="Search by report, activity, or date..." 
+                [(ngModel)]="searchTerm"
+                (input)="onSearchInput()"
+              />
+              <button *ngIf="searchTerm" class="clear-search" (click)="clearSearch()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div class="filter-group">
+              <select [(ngModel)]="activityFilter" (change)="applyFilters()" class="filter-select">
+                <option value="all">All Activities</option>
+                <option *ngFor="let activity of teamActivities" [value]="activity.id">
+                  {{ activity.codeActive }}
+                </option>
+              </select>
+              
+              <select [(ngModel)]="sortBy" (change)="applyFilters()" class="filter-select">
+                <option value="date">Sort by Date</option>
+                <option value="productivity">Sort by Productivity</option>
+                <option value="duration">Sort by Duration</option>
+              </select>
+              
+              <select [(ngModel)]="sortOrder" (change)="applyFilters()" class="filter-select">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Records Table -->
+          <div class="table-wrapper" *ngIf="paginatedRecords.length > 0">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Report</th>
+                  <th>Activity</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Duration</th>
+                  <th>Productivity</th>
+                  <th>Unit</th>
+                  <th *ngIf="canManagePerformance">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let record of paginatedRecords">
+                  <td class="date-cell">{{ record.date | date:'dd/MM/yyyy' }}</td>
+                  <td class="report-cell">
+                    <span class="report-link" (click)="viewReportDetail(record)" title="View Report">
+                      {{ truncateText(getReportTitle(record.rapportId), 30) }}
+                    </span>
+                  </td>
+                  <td class="activity-cell">
+                    <span class="activity-badge" [style.backgroundColor]="getActivityColor(record.activityId)">
+                      {{ getActivityCode(record.activityId) }}
+                    </span>
+                  </td>
+                  <td>{{ record.heureDebut }}</td>
+                  <td>{{ record.heureFin }}</td>
+                  <td>{{ record.dureeHeures | number:'1.1-1' }}h</td>
+                  <td class="productivity-cell">
+                    <div class="productivity-value" [style.color]="getProductivityColor(record.valeurRendement)">
+                      {{ record.valeurRendement | number:'1.0-0' }}
+                    </div>
+                    <div class="productivity-bar">
+                      <div class="bar-fill" [style.width.%]="getProductivityPercentage(record.valeurRendement)" 
+                           [style.backgroundColor]="getProductivityColor(record.valeurRendement)"></div>
+                    </div>
+                  </td>
+                  <td>{{ record.uniteRendement }}</td>
+                  <td *ngIf="canManagePerformance" class="actions-cell">
+                    <button class="edit-btn" (click)="openEditRecordModal(record)" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" (click)="deleteRecord(record)" title="Delete">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredProductivityRecords.length === 0 && !isLoading" class="empty-state">
+            <i class="fas fa-chart-line-slash"></i>
+            <h4>No Productivity Records</h4>
+            <p>This team doesn't have any productivity records yet.</p>
+            <button *ngIf="canManagePerformance" class="add-first-btn" (click)="openAddRecordModal()">
+              <i class="fas fa-plus-circle"></i> Add First Record
+            </button>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination-container" *ngIf="filteredProductivityRecords.length > itemsPerPage">
+            <div class="pagination-info">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+              {{ getCurrentPageEnd() }} of 
+              {{ filteredProductivityRecords.length }} records
+            </div>
+            <div class="pagination-controls">
+              <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div class="page-numbers">
+                <button *ngFor="let page of getPageNumbers()" 
+                        class="page-num" 
+                        [class.active]="page === currentPage"
+                        (click)="goToPage(page)">
+                  {{ page }}
+                </button>
+              </div>
+              <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="custom-sidebar" 
+       [class.collapsed]="sidebarCollapsed && !isMobile" 
+       [class.mobile-collapsed]="isMobile && sidebarCollapsed">
+    
+    <div class="sidebar-header">
+      <div class="header-content">
+        <nb-icon icon="bar-chart-outline" class="header-icon"></nb-icon>
+        <h3>Performance</h3>
+        <span class="teams-count">{{ filteredEquipes.length }}</span>
+      </div>
+      <button *ngIf="!isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="chevron-right-outline"></nb-icon>
+      </button>
+      <button *ngIf="isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+
+    <!-- Team Search -->
+    <div class="sidebar-search">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Search teams..." 
+          [(ngModel)]="teamSearchTerm"
+          (input)="filterTeams()"
+        />
+        <button *ngIf="teamSearchTerm" class="clear-search-btn" (click)="clearTeamSearch()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Teams List -->
+    <div class="teams-section">
+      <div class="teams-list">
+        <div *ngIf="filteredEquipes.length === 0" class="no-results">
+          <nb-icon icon="bar-chart-outline"></nb-icon>
+          <span>No teams found</span>
+          <small *ngIf="teamSearchTerm">Try a different search term</small>
+        </div>
+        
+        <div *ngFor="let equipe of filteredEquipes" class="team-item" 
+             [class.selected]="selectedEquipe?.id === equipe.id" 
+             (click)="selectTeam(equipe)">
+          <div class="team-info">
+            <div class="team-icon" [style.background]="getTypeColor(equipe.type)">
+              <i [class]="getTypeIcon(equipe.type)"></i>
+            </div>
+            <div class="team-details">
+              <span class="team-name">{{ equipe.nom }}</span>
+              <span class="team-type">{{ getTypeLabel(equipe.type) }}</span>
+            </div>
+            <div class="team-stats">
+              <div class="productivity-indicator" [style.borderColor]="getProductivityColor(equipe.averageProductivity || 0)">
+                <span class="productivity-value-small">{{ (equipe.averageProductivity || 0) | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Record Modal -->
+<div class="modal-overlay" *ngIf="showRecordModal" (click)="closeRecordModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas" [class.fa-plus-circle]="!editingRecordId" [class.fa-edit]="editingRecordId"></i> 
+        {{ editingRecordId ? 'Edit Productivity Record' : 'Add Productivity Record' }}
+      </h5>
+      <button class="close-btn" (click)="closeRecordModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="recordForm">
+      <!-- Report Selection -->
+      <div class="form-field">
+        <label>Select Report *</label>
+        <select formControlName="rapportId" class="form-input">
+          <option [value]="null">-- Select Report --</option>
+          <option *ngFor="let rapport of teamReports" [value]="rapport.id">
+            {{ rapport.titre }} ({{ rapport.date | date:'dd/MM/yyyy' }})
+          </option>
+        </select>
+      </div>
+      
+      <!-- Activity Selection -->
+      <div class="form-field">
+        <label>Select Activity *</label>
+        <select formControlName="activityId" class="form-input">
+          <option [value]="null">-- Select Activity --</option>
+          <option *ngFor="let activity of teamActivities" [value]="activity.id">
+            {{ activity.codeActive }} - {{ truncateText(activity.objectif, 50) }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label>Start Time *</label>
+          <input type="time" formControlName="heureDebut" class="form-input" step="60">
+        </div>
+        <div class="form-field">
+          <label>End Time *</label>
+          <input type="time" formControlName="heureFin" class="form-input" step="60">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label>Date *</label>
+          <input type="date" formControlName="date" class="form-input">
+        </div>
+        <div class="form-field">
+          <label>Unit *</label>
+          <select formControlName="uniteRendement" class="form-input">
+            <option value="m²">Square Meters (m²)</option>
+            <option value="km">Kilometers (km)</option>
+            <option value="m">Meters (m)</option>
+            <option value="unit">Units</option>
+            <option value="point">Points</option>
+            <option value="percentage">Percentage (%)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-field">
+        <label>Productivity Value *</label>
+        <input type="number" formControlName="valeurRendement" class="form-input" 
+               step="0.01" min="0" placeholder="Enter productivity value">
+      </div>
+      
+      <div class="info-message">
+        <i class="fas fa-info-circle"></i>
+        <small>Productivity records help track team performance over time.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeRecordModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitRecord()" [disabled]="recordForm.invalid">
+        <i class="fas fa-save"></i> {{ editingRecordId ? 'Update' : 'Add' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal-overlay" *ngIf="showReportModal" (click)="closeReportModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-file-alt"></i> Report Details</h5>
+      <button class="close-btn" (click)="closeReportModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedReport">
+      <div class="report-info">
+        <h4>{{ selectedReport.titre }}</h4>
+        <p class="report-date"><i class="far fa-calendar-alt"></i> {{ selectedReport.date | date:'fullDate' }}</p>
+        <div class="report-summary">
+          <strong>Summary:</strong>
+          <p>{{ selectedReport.resume }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeReportModal()">Close</button>
+    </div>
+  </div>
+</div>

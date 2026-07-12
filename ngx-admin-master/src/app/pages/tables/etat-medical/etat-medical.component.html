@@ -1,0 +1,40 @@
+<nb-card class="medical-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="heart-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Medical Records Management</h4>
+          <span class="card-subtitle" *ngIf="employeName">
+            <nb-icon icon="person-outline" class="subtitle-icon"></nb-icon>
+            Employee: {{ employeName }}
+          </span>
+          <span class="card-subtitle" *ngIf="!employeName">
+            <nb-icon icon="people-outline" class="subtitle-icon"></nb-icon>
+            All Medical Records - Click "Medical History" button to view antecedents
+          </span>
+        </div>
+      </div>
+      
+      <button *ngIf="isSpecificEmployee" 
+              nbButton 
+              status="primary" 
+              size="medium"
+              (click)="goBack()"
+              class="back-button">
+        <nb-icon icon="arrow-back-outline"></nb-icon>
+        <span>Back to Employees</span>
+      </button>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

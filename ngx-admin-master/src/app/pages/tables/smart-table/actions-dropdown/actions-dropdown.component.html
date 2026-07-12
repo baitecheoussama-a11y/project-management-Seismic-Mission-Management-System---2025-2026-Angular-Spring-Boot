@@ -1,0 +1,9 @@
+<button nbButton status="basic" size="small" [nbContextMenu]="items" nbContextMenuTag="employee-actions">
+  ⋮
+</button>
+
+<ng-template #menuItems>
+  <nb-context-menu>
+    <nb-menu [items]="items" (itemClick)="onItemClick($event)"></nb-menu>
+  </nb-context-menu>
+</ng-template>

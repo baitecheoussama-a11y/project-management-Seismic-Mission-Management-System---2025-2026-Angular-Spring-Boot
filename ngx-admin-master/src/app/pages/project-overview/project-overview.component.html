@@ -1,0 +1,593 @@
+<div class="project-container">
+  
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>Loading project data...</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && project" class="project-content fade-up">
+    
+    <!-- Header Section -->
+    <div class="project-header">
+      <div class="header-top" [class.no-back-btn]="fromDashboard">
+        <div class="header-left">
+          <button class="back-btn" (click)="goBack()" *ngIf="!fromDashboard">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+          </button>
+        </div>
+     <!-- In the header-right section -->
+<div class="header-right">
+  <button *ngIf="canManageProject && isProjectEditable() && !isProjectCancelled()" 
+          class="cancel-btn" 
+          (click)="cancelProject()">
+    <i class="fas fa-ban"></i>
+    <span>Cancel Project</span>
+  </button>
+  <button *ngIf="canManageProject && isProjectEditable()" class="edit-btn" (click)="openEditModal()">
+    <i class="fas fa-pen"></i>
+    <span>Edit Project</span>
+  </button>
+</div>
+      </div>
+      
+      <!-- Project info -->
+      <div class="header-main" [class.no-back-btn]="fromDashboard">
+        <div class="project-info">
+          <div class="project-badges">
+            <span class="mission-badge" *ngIf="project.missionCode">
+              <i class="fas fa-bullseye"></i> {{ project.missionCode }}
+            </span>
+            <span class="mission-badge" *ngIf="!project.missionCode">
+              <i class="fas fa-bullseye"></i> No Mission
+            </span>
+            
+            <!-- Status Badge - Click to edit real dates -->
+            <span class="status-badge clickable" 
+                  [class]="getStatusBadgeClass(getProjectStatus())"
+                  (click)="canManageProject && isProjectEditable() ? openEditDatesModal() : null"
+                  [class.disabled]="!canManageProject || !isProjectEditable()"
+                  title="{{ canManageProject && isProjectEditable() ? 'Click to edit actual dates' : 'Read only' }}">
+              <i class="fas fa-calendar-alt"></i> 
+              {{ getStatusLabel(getProjectStatus()) }}
+            </span>
+          </div>
+          <h1>{{ project.nom }}</h1>
+          <p class="project-description">{{ project.description || 'No description provided' }}</p>
+          
+          <!-- Display Real Dates if available -->
+          <div class="project-real-dates" *ngIf="project.dateStartReelle || project.dateFinReelle">
+            <span class="real-date-badge" *ngIf="project.dateStartReelle">
+              <i class="fas fa-play-circle"></i> Started: {{ formatDate(project.dateStartReelle) }}
+            </span>
+            <span class="real-date-badge" *ngIf="project.dateFinReelle">
+              <i class="fas fa-check-circle"></i> Completed: {{ formatDate(project.dateFinReelle) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon progress-bg">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ project.progression || 0 }}<span class="stat-suffix">%</span></div>
+          <div class="stat-label">Progress</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon date-bg">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatDate(project.objectifDebut) }}</div>
+          <div class="stat-label">Start Date</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon date-bg">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatDate(project.objectifFin) }}</div>
+          <div class="stat-label">End Date</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon budget-bg">
+          <i class="fas fa-coins"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatCurrency(project.budget || 0) }}<span class="stat-suffix">DA</span></div>
+          <div class="stat-label">Budget</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon spent-bg">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatCurrency(project.budgetDepense || 0) }}<span class="stat-suffix">DA</span></div>
+          <div class="stat-label">Spent</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon vp-bg">
+          <i class="fas fa-flag-checkered"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ (project.objectifVP || 0) | number }}<span class="stat-suffix">VP</span></div>
+          <div class="stat-label">Target VP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Progress Overview (60%) + Site Information (40%) -->
+    <div class="two-column-grid">
+      
+      <!-- LEFT COLUMN 60% - Progress Overview -->
+      <div class="col-60">
+        <div class="card progress-card">
+          <div class="card-header">
+            <i class="fas fa-chart-simple"></i>
+            <h3>Progress Overview</h3>
+          </div>
+          <div class="card-body">
+            <div class="activity-stats-summary">
+              <div class="stats-row">
+                <div class="stat-mini">
+                  <div class="stat-mini-value">{{ projectProgressStats?.totalActivities || 0 }}</div>
+                  <div class="stat-mini-label">Total Activities</div>
+                </div>
+                <div class="stat-mini completed">
+                  <div class="stat-mini-value">{{ projectProgressStats?.completedActivities || 0 }}</div>
+                  <div class="stat-mini-label">Completed</div>
+                  <div class="stat-mini-progress" [style.width.%]="getActivityCompletionRate()"></div>
+                </div>
+                <div class="stat-mini in-progress">
+                  <div class="stat-mini-value">{{ projectProgressStats?.inProgressActivities || 0 }}</div>
+                  <div class="stat-mini-label">In Progress</div>
+                </div>
+                <div class="stat-mini pending">
+                  <div class="stat-mini-value">{{ projectProgressStats?.pendingActivities || 0 }}</div>
+                  <div class="stat-mini-label">Pending</div>
+                </div>
+                <div class="stat-mini delayed" *ngIf="projectProgressStats?.delayedActivities">
+                  <div class="stat-mini-value">{{ projectProgressStats?.delayedActivities || 0 }}</div>
+                  <div class="stat-mini-label">Delayed</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="productivity-summary">
+              <div class="productivity-item">
+                <i class="fas fa-clock"></i>
+                <div class="productivity-info">
+                  <span class="productivity-label">Total Working Hours</span>
+                  <strong class="productivity-value">{{ (projectProgressStats?.totalWorkHours || 0) | number:'1.1-1' }} h</strong>
+                </div>
+              </div>
+              <div class="productivity-item">
+                <i class="fas fa-chart-line"></i>
+                <div class="productivity-info">
+                  <span class="productivity-label">Average Productivity</span>
+                  <strong class="productivity-value">{{ (projectProgressStats?.averageProductivity || 0) | number:'1.0-0' }}%</strong>
+                </div>
+              </div>
+              <div class="productivity-item">
+                <i class="fas fa-file-alt"></i>
+                <div class="productivity-info">
+                  <span class="productivity-label">Total Reports</span>
+                  <strong class="productivity-value">{{ projectProgressStats?.totalReports || 0 }}</strong>
+                </div>
+              </div>
+              <div class="productivity-item">
+                <i class="fas fa-chart-simple"></i>
+                <div class="productivity-info">
+                  <span class="productivity-label">Productivity Records</span>
+                  <strong class="productivity-value">{{ projectProgressStats?.totalRendements || 0 }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="progress-row">
+              <div class="progress-ring">
+                <div class="progress-circle">
+                  <svg viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+                    <circle cx="60" cy="60" r="54" fill="none" 
+                            [attr.stroke]="getProgressColor(getActivityCompletionPercentage())" 
+                            stroke-width="8"
+                            stroke-dasharray="339.292"
+                            [attr.stroke-dashoffset]="339.292 - (339.292 * getActivityCompletionPercentage() / 100)"
+                            stroke-linecap="round"
+                            transform="rotate(-90 60 60)"/>
+                  </svg>
+                  <div class="progress-percentage">
+                    <span class="percentage-value">{{ getActivityCompletionPercentage() }}%</span>
+                    <span class="percentage-label">Completion</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="progress-details">
+                <div class="detail-item">
+                  <span class="detail-label">Activities Progress</span>
+                  <div class="detail-value">
+                    <span>{{ projectProgressStats?.completedActivities || 0 }} / {{ projectProgressStats?.totalActivities || 0 }} completed</span>
+                    <div class="progress-bar-mini">
+                      <div class="progress-fill" [style.width.%]="getActivityCompletionRate()" style="background: #10b981"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">VP Achievement</span>
+                  <div class="detail-value">
+                    <span>{{ (project.vpAtteint || 0) | number }} / {{ (project.objectifVP || 0) | number }}</span>
+                    <div class="progress-bar-mini">
+                      <div class="progress-fill" [style.width.%]="((project.vpAtteint || 0) / (project.objectifVP || 1)) * 100" style="background: #3b82f6"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Time Remaining</span>
+                  <div class="detail-value">
+                    <span>{{ getRemainingDays() }} days</span>
+                    <div class="progress-bar-mini">
+                      <div class="progress-fill" [style.width.%]="getRemainingPercent()" style="background: #8b5cf6"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN 40% - Site Information -->
+      <div class="col-40">
+        <div class="card site-card">
+          <div class="card-header">
+            <i class="fas fa-map-marker-alt"></i>
+            <h3>Site Information</h3>
+            <button *ngIf="isSiteEditable()" class="edit-site-btn" (click)="openSiteModal()">
+              <i class="fas fa-edit"></i>
+              <span>Edit</span>
+            </button>
+          </div>
+          <div class="card-body">
+            <div *ngIf="currentSite; else noSite">
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Wilaya</span>
+                  <span class="info-value">{{ currentSite.wilaya?.nom }} ({{ currentSite.wilaya?.numWilaya }})</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Surface Area</span>
+                  <span class="info-value">{{ currentSite.surface }} km²</span>
+                </div>
+              </div>
+              
+              <div class="map-container" *ngIf="currentSite?.coordonnees?.length">
+                <div class="map-header">
+                  <i class="fas fa-map"></i>
+                  <span>Project Zone Map ({{ currentSite.coordonnees.length }} points)</span>
+                </div>
+                <div class="map-placeholder">
+                  <div class="map-mock">
+                    <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="400" height="300" fill="#e2e8f0" rx="12"/>
+                      <polygon [attr.points]="getPolygonPoints()" 
+                               fill="rgba(59,130,246,0.3)" stroke="#3b82f6" stroke-width="2"
+                               *ngIf="getPolygonPoints()"/>
+                      <ng-container *ngFor="let coord of currentSite.coordonnees; let i = index">
+                        <circle [attr.cx]="getMapX(coord.longitude)" 
+                                [attr.cy]="getMapY(coord.latitude)" 
+                                r="4" fill="#ef4444"
+                                *ngIf="getMapX(coord.longitude) && getMapY(coord.latitude)"/>
+                        <text [attr.x]="getMapX(coord.longitude) + 5" 
+                              [attr.y]="getMapY(coord.latitude) - 5" 
+                              fill="#3b82f6" font-size="10" font-weight="bold"
+                              *ngIf="getMapX(coord.longitude) && getMapY(coord.latitude)">{{ i + 1 }}</text>
+                      </ng-container>
+                      <text x="15" y="290" fill="#64748b" font-size="10">Polygonal visualization</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="coordinatesList.length === 1" class="map-preview">
+                <div class="preview-header">
+                  <i class="fas fa-map-marker"></i>
+                  <span>Single Point (Need at least 2 points for polygon)</span>
+                </div>
+                <div class="mini-map">
+                  <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="300" height="200" fill="#f1f5f9" rx="8"/>
+                    <circle cx="150" cy="100" r="6" fill="#ef4444"/>
+                    <text x="160" y="95" fill="#3b82f6" font-size="10" font-weight="bold">Point 1</text>
+                  </svg>
+                </div>
+              </div>
+                  
+              <div class="coordinates-list" *ngIf="currentSite.coordonnees?.length">
+                <div class="list-header">
+                  <span>Point</span>
+                  <span>Latitude</span>
+                  <span>Longitude</span>
+                </div>
+                <div *ngFor="let coord of currentSite.coordonnees; let i = index" class="coordinate-item">
+                  <div class="coord-number">{{ coord.ordre }}</div>
+                  <div class="coord-values">
+                    <span class="coord-lat">{{ coord.latitude.toFixed(6) }}°</span>
+                    <span class="coord-lng">{{ coord.longitude.toFixed(6) }}°</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <ng-template #noSite>
+              <div class="no-site-info">
+                <i class="fas fa-map-marked-alt"></i>
+                <p>No site information added yet</p>
+                <button *ngIf="isSiteEditable()" class="add-site-btn" (click)="openSiteModal()">
+                  <i class="fas fa-plus"></i> Add Site Information
+                </button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Activities Progress (60%) + Project Reports (40%) -->
+    <div class="two-column-grid">
+      
+      <!-- LEFT COLUMN 60% - Activities Progress -->
+      <div class="col-60">
+        <div class="card activities-progress-card" *ngIf="projectProgressStats?.activitiesProgress?.length">
+          <div class="card-header">
+            <div class="header-left">
+              <i class="fas fa-tasks"></i>
+              <h3>Activities Progress</h3>
+            </div>
+            <div class="header-right">
+              <span class="activity-count">{{ projectProgressStats.activitiesProgress.length }} activities</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="activities-list">
+              <div *ngFor="let activity of projectProgressStats.activitiesProgress" class="activity-progress-item">
+                <div class="activity-main">
+                  <div class="activity-header">
+                    <div class="activity-code">
+                      <i class="fas fa-bullseye"></i>
+                      <strong>{{ activity.codeActive }}</strong>
+                    </div>
+                    <div class="activity-status-badge" [class]="getActivityStatusClass(activity.status)">
+                      {{ getActivityStatusLabel(activity.status) }}
+                    </div>
+                  </div>
+                  <div class="activity-objectif">{{ activity.objectif }}</div>
+                  <div class="activity-stats">
+                    <div class="activity-stat">
+                      <i class="fas fa-chart-line"></i>
+                      <span>{{ activity.productivityValue | number:'1.0-0' }} units</span>
+                    </div>
+                    <div class="activity-stat">
+                      <i class="fas fa-clock"></i>
+                      <span>{{ activity.totalWorkHours | number:'1.1-1' }} h</span>
+                    </div>
+                    <div class="activity-stat">
+                      <i class="fas fa-table-list"></i>
+                      <span>{{ activity.rendementCount }} records</span>
+                    </div>
+                  </div>
+                  <div class="activity-progress-bar">
+                    <div class="progress-label">
+                      <span>Completion</span>
+                      <span>{{ activity.completionPercentage }}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                      <div class="progress-fill" [style.width.%]="activity.completionPercentage" 
+                           [style.background]="getProgressColor(activity.completionPercentage)"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card activities-progress-card" *ngIf="!projectProgressStats?.activitiesProgress?.length">
+          <div class="card-header">
+            <div class="header-left">
+              <i class="fas fa-tasks"></i>
+              <h3>Activities Progress</h3>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="empty-state-small">
+              <i class="fas fa-inbox"></i>
+              <p>No activities found for this project</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN 40% - Project Reports -->
+      <div class="col-40">
+        <div class="card reports-card">
+          <div class="card-header">
+            <i class="fas fa-file-alt"></i>
+            <h3>Project Reports</h3>
+            <button *ngIf="isReportsEditable()" class="add-btn" (click)="openAddRapportModal()">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="reports-list" [class.has-many]="(project.rapports?.length || 0) > 3">
+              <div *ngFor="let rapport of project.rapports || []" class="report-item">
+                <div class="report-icon">
+                  <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="report-details">
+                  <div class="report-title">{{ rapport.titre }}</div>
+                  <div class="report-meta">
+                    <span><i class="fas fa-calendar"></i> {{ formatDate(rapport.date) }}</span>
+                  </div>
+                  <p class="report-desc">{{ (rapport.resume || '') | slice:0:80 }}...</p>
+                </div>
+                <div class="report-actions" *ngIf="isReportsEditable()">
+                  <button class="edit-report-btn" (click)="openEditRapportModal(rapport)" title="Edit Report">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="delete-report-btn" (click)="deleteRapport(rapport, $event)" title="Delete Report">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div *ngIf="!project.rapports?.length" class="empty-state-small">
+                <i class="fas fa-file-alt"></i>
+                <p>No reports yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ====== MODALS ====== -->
+
+  <!-- Edit Project Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal && canManageProject" (click)="closeEditModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5><i class="fas fa-edit"></i> Edit Project</h5>
+        <button class="close-btn" (click)="closeEditModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="saveProject()">
+        <div class="modal-body">
+          <div class="form-field"><label>Project Name *</label><input type="text" formControlName="nom" class="form-input"></div>
+          <div class="form-field"><label>Description *</label><textarea formControlName="description" rows="3" class="form-input"></textarea></div>
+          <div class="form-row">
+            <div class="form-field"><label>Budget (DA) *</label><input type="number" formControlName="budget" class="form-input"></div>
+            <div class="form-field"><label>Target VP *</label><input type="number" formControlName="objectifVP" class="form-input"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>Start Date *</label><input type="date" formControlName="objectifDebut" class="form-input"></div>
+            <div class="form-field"><label>End Date *</label><input type="date" formControlName="objectifFin" class="form-input"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="cancel-btn" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" class="confirm-btn" [disabled]="editForm.invalid"><i class="fas fa-save"></i> Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Report Modal -->
+  <div class="modal-overlay" *ngIf="showAddRapportModal && canManageReports" (click)="closeAddRapportModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header"><h5><i class="fas fa-file-alt"></i> Add Report</h5><button class="close-btn" (click)="closeAddRapportModal()"><i class="fas fa-times"></i></button></div>
+      <form [formGroup]="rapportForm" (ngSubmit)="submitRapport()">
+        <div class="modal-body">
+          <div class="form-field"><label>Title *</label><input type="text" formControlName="titre" class="form-input"></div>
+          <div class="form-field"><label>Date *</label><input type="date" formControlName="date" class="form-input"></div>
+          <div class="form-field"><label>Summary *</label><textarea formControlName="resume" rows="4" class="form-input"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="cancel-btn" (click)="closeAddRapportModal()">Cancel</button>
+          <button type="submit" class="confirm-btn" [disabled]="rapportForm.invalid"><i class="fas fa-plus"></i> Add Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Site Modal -->
+  <div class="modal-overlay" *ngIf="showSiteModal && canManageProject" (click)="closeSiteModal()">
+    <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header"><h5><i class="fas fa-map-marker-alt"></i> {{ currentSite ? 'Edit Site' : 'Add Site' }}</h5><button class="close-btn" (click)="closeSiteModal()"><i class="fas fa-times"></i></button></div>
+      <form [formGroup]="siteForm" (ngSubmit)="saveSite()">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-field"><label>Wilaya</label><select formControlName="numWilaya" class="form-input"><option [ngValue]="null">Select</option><option *ngFor="let w of wilayas" [ngValue]="w.numWilaya">{{ w.numWilaya }} - {{ w.nom }}</option></select></div>
+            <div class="form-field"><label>Surface (km²)</label><input type="number" formControlName="surface" class="form-input"></div>
+          </div>
+          <div class="coordinates-section">
+            <div class="section-header"><label>Coordinates</label><button type="button" class="add-coord-btn" (click)="addCoordinate()"><i class="fas fa-plus"></i> Add Point</button></div>
+            <div class="coordinates-list-editable">
+              <div *ngFor="let coord of coordinatesList; let i = index" class="coordinate-item">
+                <div class="coord-number">{{ coord.ordre }}</div>
+                <div class="coord-values"><span class="coord-lat">{{ coord.latitude.toFixed(6) }}°</span><span class="coord-lng">{{ coord.longitude.toFixed(6) }}°</span></div>
+                <button type="button" class="remove-coord-btn" (click)="removeCoordinate(i)"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+            <div *ngIf="coordinatesList.length === 0" class="no-coordinates"><i class="fas fa-draw-polygon"></i><p>No coordinates</p><small>Add >=2 points</small></div>
+            <div *ngIf="coordinatesList.length > 0 && coordinatesList.length < 2" class="warning-message"><i class="fas fa-exclamation-triangle"></i> Need at least 2 points</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="cancel-btn" (click)="closeSiteModal()">Cancel</button>
+          <button type="submit" class="confirm-btn" [disabled]="siteForm.invalid || coordinatesList.length < 2"><i class="fas fa-save"></i> Save Site</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====== EDIT REAL DATES MODAL ====== -->
+  <div class="modal-overlay" *ngIf="showEditDatesModal && canManageProject" (click)="closeEditDatesModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5><i class="fas fa-calendar-edit"></i> Edit Actual Dates</h5>
+        <button class="close-btn" (click)="closeEditDatesModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <label>Actual Start Date</label>
+          <input type="date" [(ngModel)]="editDateStartReelle" class="form-input">
+          <small class="field-hint">Set this when the project actually started</small>
+        </div>
+        <div class="form-field">
+          <label>Actual End Date</label>
+          <input type="date" [(ngModel)]="editDateFinReelle" class="form-input">
+          <small class="field-hint">Set this when the project is completed or cancelled</small>
+        </div>
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <p><strong>Status will be auto-calculated:</strong></p>
+            <ul>
+              <li>Start date set → <strong>In Progress</strong> or <strong>Delayed</strong></li>
+              <li>End date set → <strong>Completed</strong></li>
+              <li>No dates → <strong>Planned</strong></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn" (click)="closeEditDatesModal()">Cancel</button>
+        <button class="confirm-btn" (click)="saveRealDates()">
+          <i class="fas fa-save"></i> Save Dates
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

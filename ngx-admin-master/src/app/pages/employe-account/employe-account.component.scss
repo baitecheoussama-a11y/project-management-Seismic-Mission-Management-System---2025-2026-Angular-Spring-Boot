@@ -1,0 +1,346 @@
+.account-container {
+  padding: 1.5rem;
+  
+  .header-card {
+    margin-bottom: 2rem;
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      
+      .back-btn {
+        nb-icon {
+          margin-right: 0.25rem;
+        }
+      }
+      
+      .title-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        
+        .header-icon {
+          font-size: 2.5rem;
+          color: #3366ff;
+        }
+        
+        h2 {
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 600;
+        }
+        
+        .subtitle {
+          margin: 0.25rem 0 0;
+          color: #8f9bb3;
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }
+  
+  .loading-container {
+    text-align: center;
+    padding: 4rem;
+    
+    p {
+      margin-top: 1rem;
+      color: #8f9bb3;
+    }
+  }
+  
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 1.5rem;
+    
+    .info-card {
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      nb-card-header {
+        background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+        border-bottom: 2px solid #3366ff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        .card-title {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-weight: 600;
+          font-size: 1.1rem;
+          
+          .card-icon {
+            font-size: 1.5rem;
+            color: #3366ff;
+          }
+        }
+        
+        .card-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+      }
+      
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        
+        .info-item {
+          label {
+            display: block;
+            font-size: 0.75rem;
+            color: #8f9bb3;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            font-weight: 600;
+          }
+          
+          .info-value {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2d3e5f;
+            word-break: break-word;
+          }
+        }
+      }
+    }
+    
+    .personal-card {
+      grid-column: span 2;
+    }
+    
+    // Function Card Styles
+    .function-card {
+      .function-details {
+        .function-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 2px solid #e0e8ff;
+          
+          .function-icon {
+            font-size: 2rem;
+            width: 40px;
+            height: 40px;
+          }
+          
+          .function-name {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #3366ff;
+          }
+        }
+        
+        .function-description {
+          margin-bottom: 1.5rem;
+          
+          label {
+            display: block;
+            font-size: 0.75rem;
+            color: #8f9bb3;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-weight: 600;
+          }
+          
+          p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #2d3e5f;
+          }
+        }
+        
+        .function-stats {
+          display: flex;
+          gap: 1.5rem;
+          padding-top: 1rem;
+          border-top: 1px solid #e0e8ff;
+          
+          .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #8f9bb3;
+            
+            nb-icon {
+              font-size: 1rem;
+            }
+          }
+        }
+      }
+      
+      .assign-btn {
+        margin-top: 1rem;
+        
+        nb-icon {
+          margin-right: 0.5rem;
+        }
+      }
+    }
+    
+    .roles-card {
+      .roles-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+      
+      .role-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #f8f9fc;
+        border-radius: 8px;
+        border-left: 3px solid #3366ff;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .role-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem;
+          
+          .role-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            
+            nb-icon {
+              font-size: 1rem;
+            }
+            
+            strong {
+              font-size: 1rem;
+              color: #3366ff;
+            }
+            
+            .role-type {
+              font-size: 0.75rem;
+              padding: 0.25rem 0.5rem;
+              background: #e0e8ff;
+              border-radius: 4px;
+              color: #3366ff;
+            }
+          }
+          
+          .role-status {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            
+            &.active {
+              background: #e8f5e9;
+              color: #2e7d32;
+            }
+            
+            &.inactive {
+              background: #ffebee;
+              color: #c62828;
+            }
+          }
+        }
+        
+        .role-dates {
+          margin-top: 0.5rem;
+          color: #8f9bb3;
+        }
+      }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: #8f9bb3;
+      
+      nb-icon {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      p {
+        margin: 0;
+      }
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      
+      &.status-success {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      
+      &.status-warning {
+        background: #fff3e0;
+        color: #ef6c00;
+      }
+      
+      &.status-danger {
+        background: #ffebee;
+        color: #c62828;
+      }
+    }
+  }
+}
+
+.account-card {
+  .no-account-section {
+    text-align: center;
+    padding: 2rem;
+    
+    .no-account-icon {
+      nb-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+    }
+    
+    h5 {
+      margin: 0 0 0.5rem;
+      color: #2d3e5f;
+    }
+    
+    .text-muted {
+      color: #8f9bb3;
+      margin-bottom: 1.5rem;
+    }
+    
+    .create-account-btn {
+      nb-icon {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .account-container .content-grid {
+    grid-template-columns: 1fr;
+    
+    .personal-card {
+      grid-column: span 1;
+    }
+  }
+}

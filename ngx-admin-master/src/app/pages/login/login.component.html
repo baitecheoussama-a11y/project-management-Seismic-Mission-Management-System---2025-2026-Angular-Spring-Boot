@@ -1,0 +1,74 @@
+<div class="login-container">
+  <div class="login-card">
+    
+    <!-- Page Title -->
+    <h1 class="title">Login</h1>
+    <p class="sub-title">Welcome! Please log in with your username and password.</p>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-danger">
+      <strong>Error!</strong> {{ errorMessage }}
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      <strong>Success!</strong> {{ successMessage }}
+    </div>
+
+    <!-- Login Form -->
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      
+      <!-- Username Field -->
+      <div class="form-group">
+        <label class="label">Username:</label>
+        <input type="text"
+               class="form-control"
+               [(ngModel)]="loginData.username"
+               name="username"
+               required
+               placeholder="Enter your username"
+               #username="ngModel">
+        <div *ngIf="username.invalid && username.touched" class="error-message">
+          Username is required
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label class="label">Password:</label>
+        <input type="password"
+               class="form-control"
+               [(ngModel)]="loginData.password"
+               name="password"
+               required
+               placeholder="Enter your password"
+               #password="ngModel">
+        <div *ngIf="password.invalid && password.touched" class="error-message">
+          Password is required
+        </div>
+      </div>
+
+      <!-- Remember Me Option -->
+      <div class="checkbox-group">
+        <label>
+          <input type="checkbox" [(ngModel)]="loginData.rememberMe" name="rememberMe">
+          Remember me
+        </label>
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" 
+              class="btn-login" 
+              [disabled]="loginForm.invalid || isLoading">
+        {{ isLoading ? 'Logging in...' : 'Login' }}
+      </button>
+
+    </form>
+
+    <!-- Additional Links -->
+    <div class="links">
+      <a routerLink="/forgot-password">Forgot password?</a>
+    </div>
+
+  </div>
+</div>

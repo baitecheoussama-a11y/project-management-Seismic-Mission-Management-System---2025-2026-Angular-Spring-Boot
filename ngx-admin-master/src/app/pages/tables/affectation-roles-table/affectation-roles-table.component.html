@@ -1,0 +1,43 @@
+<nb-card class="affectation-roles-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="people-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">
+            Roles & Permissions Management
+            <span *ngIf="specificEmployeName" class="specific-badge">
+              - {{ specificEmployeName }}
+            </span>
+          </h4>
+          <span class="card-subtitle">
+            <nb-icon icon="person-add-outline" class="subtitle-icon"></nb-icon>
+            Assign and manage roles for employee account
+          </span>
+        </div>
+      </div>
+      <button nbButton ghost status="primary" (click)="goBack()" class="back-btn">
+        <nb-icon icon="arrow-back-outline"></nb-icon> Back to Employee
+      </button>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <!-- رسالة إرشادية -->
+    <div class="info-message">
+      <nb-icon icon="info-outline" status="info"></nb-icon>
+      <span>
+        <strong>How to assign a role:</strong> Click the + button to add a new role. 
+        You can edit start/end dates and activate/deactivate roles.
+      </span>
+    </div>
+
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

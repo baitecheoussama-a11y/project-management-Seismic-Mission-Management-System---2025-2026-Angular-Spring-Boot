@@ -1,0 +1,775 @@
+<div class="equipe-detail-container">
+  
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>Loading team data...</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && equipeDetail" class="equipe-content fade-up">
+    
+    <!-- Header Section -->
+    <div class="equipe-header">
+      <div class="header-top">
+        <button class="back-btn" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Mission</span>
+        </button>
+        
+        <div class="equipe-actions-header">
+          <button class="action-btn edit-equipe" (click)="openEditEquipeModal()">
+            <i class="fas fa-edit"></i>
+            <span>Edit Team</span>
+          </button>
+          <button class="action-btn delete-equipe" (click)="deleteEquipe()">
+            <i class="fas fa-trash"></i>
+            <span>Delete Team</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="equipe-title-section">
+        <div class="equipe-icon-wrapper" [style.background]="getTypeColor()">
+          <i [class]="getTypeIcon()"></i>
+        </div>
+        <div class="equipe-info">
+          <h1>{{ equipeDetail.nom }}</h1>
+          <p class="equipe-type">{{ getTypeText() }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-cards-grid">
+      <div class="stat-card">
+        <div class="stat-icon membres-bg">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ equipeDetail.statistiques.totalActivites }}</div>
+          <div class="stat-label">Activities</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon rapports-bg">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ equipeDetail.statistiques.totalRapports }}</div>
+          <div class="stat-label">Reports</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon rendements-bg">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ equipeDetail.statistiques.moyenneRendement | number:'1.0-0' }}%</div>
+          <div class="stat-label">Avg Productivity</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon heures-bg">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ equipeDetail.statistiques.totalHeuresTravaillees | number:'1.0-0' }}</div>
+          <div class="stat-label">Working Hours</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button class="tab-btn" [class.active]="selectedTab === 'members'" (click)="selectTab('members')">
+        <i class="fas fa-user-friends"></i>
+        <span>Members</span>
+        <span class="badge">{{ equipeDetail.membres.length }}</span>
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab === 'activities'" (click)="selectTab('activities')">
+        <i class="fas fa-tasks"></i>
+        <span>Activities</span>
+        <span class="badge">{{ equipeDetail.statistiques.totalActivites }}</span>
+      </button>
+   
+      <button class="tab-btn" [class.active]="selectedTab === 'performance'" (click)="selectTab('performance')">
+        <i class="fas fa-chart-line"></i>
+        <span>Performance</span>
+        <span class="badge">{{ equipeDetail.statistiques.totalRendements }}</span>
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      
+     <!-- Members Tab -->
+<div *ngIf="selectedTab === 'members'" class="members-tab">
+  <div class="members-header">
+    <h4><i class="fas fa-users"></i> Team Members</h4>
+    <button class="add-btn" (click)="openAddMemberModal()">
+      <i class="fas fa-user-plus"></i>
+      <span>Add Member</span>
+    </button>
+  </div>
+  
+  <div class="search-bar" *ngIf="equipeDetail.membres.length > 5">
+    <i class="fas fa-search"></i>
+    <input 
+      type="text" 
+      placeholder="Search members..."
+      [(ngModel)]="memberSearchTerm"
+      (input)="filterMembers()"
+    />
+  </div>
+  
+  <div class="members-grid">
+    <div *ngFor="let member of paginatedMembers" class="member-card" (click)="viewEmployeeProfile(member.id, member.prenom, member.nom)">
+      <div class="member-avatar" [style.background]="getAvatarColor(member.id)">
+        {{ member.prenom?.charAt(0) }}{{ member.nom?.charAt(0) }}
+      </div>
+      <div class="member-info">
+        <h4>{{ member.prenom }} {{ member.nom }}</h4>
+        <div class="member-contact">
+          <a [href]="'mailto:' + member.email" class="contact-link" (click)="$event.stopPropagation()" title="Send Email">
+            <i class="fas fa-envelope"></i>
+          </a>
+          <a [href]="'tel:' + member.numTel" class="contact-link" (click)="$event.stopPropagation()" title="Call">
+            <i class="fas fa-phone"></i>
+          </a>
+        </div>
+      </div>
+      <button class="remove-member-btn" (click)="$event.stopPropagation(); removeMember(member.id, member.prenom + ' ' + member.nom)" title="Remove Member">
+        <i class="fas fa-user-minus"></i>
+      </button>
+    </div>
+  </div>
+        
+        <!-- Members Pagination -->
+        <div class="pagination-container" *ngIf="filteredMembers.length > membersPageSize">
+          <div class="pagination-info">
+            Showing {{ (membersCurrentPage - 1) * membersPageSize + 1 }} - 
+            {{ Math.min(membersCurrentPage * membersPageSize, filteredMembers.length) }} 
+            of {{ filteredMembers.length }} members
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="goToFirstMembersPage()" [disabled]="membersCurrentPage === 1">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="page-btn" (click)="previousMembersPage()" [disabled]="membersCurrentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getMembersPageNumbers()" 
+                      class="page-num" 
+                      [class.active]="page === membersCurrentPage" 
+                      (click)="goToMembersPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn" (click)="nextMembersPage()" [disabled]="membersCurrentPage === membersTotalPages">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="page-btn" (click)="goToLastMembersPage()" [disabled]="membersCurrentPage === membersTotalPages">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div *ngIf="filteredMembers.length === 0" class="empty-state">
+          <i class="fas fa-user-slash"></i>
+          <p>No members in this team</p>
+        </div>
+      </div>
+
+<!-- Activities Tab -->
+<div *ngIf="selectedTab === 'activities'" class="activities-tab">
+  <div class="activities-header">
+    <h4><i class="fas fa-tasks"></i> Team Activities</h4>
+    <button class="add-btn" (click)="openAddActivityModal()">
+      <i class="fas fa-plus-circle"></i>
+      <span>Add Activity</span>
+    </button>
+  </div>
+  
+  <div class="activities-timeline">
+    <div *ngFor="let activity of paginatedActivities" class="activity-card">
+      <div class="activity-header">
+        <div class="activity-icon">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="activity-info">
+          <h4>{{ activity.codeActive }}</h4>
+          <p class="activity-objectif">{{ activity.objectif }}</p>
+        </div>
+        
+        <!-- Status Badge (Display Only) -->
+        <div class="activity-status">
+          <div class="status-badge" *ngIf="activityProgressMap.get(activity.id) as progress"
+               [style.backgroundColor]="getStatusColor(progress.status)">
+            <i [class]="getStatusIcon(progress.status)"></i>
+            <span>{{ getStatusLabel(progress.status) }}</span>
+          </div>
+          <div class="status-badge" *ngIf="!activityProgressMap.get(activity.id)" style="background-color: #94a3b8">
+            <i class="far fa-calendar-alt"></i>
+            <span>Planned</span>
+          </div>
+        </div>
+        
+        <!-- Progress Percentage (Display Only) -->
+        <div class="activity-progress">
+          <div class="progress-indicator">
+            <span class="progress-value">{{ getProgressPercentage(activity) }}%</span>
+          </div>
+        </div>
+        
+        <!-- Remove Button Only (No Track Progress) -->
+        <button class="remove-activity-btn" (click)="removeActivity(activity.id, activity.codeActive)" title="Remove Activity">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+      
+      <div class="activity-body">
+        <p class="activity-description">{{ activity.description }}</p>
+        <div class="activity-dates">
+          <div class="date-badge">
+            <i class="far fa-calendar-alt"></i>
+            <span>From: {{ activity.dateDebut | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="date-badge" *ngIf="activity.dateFin">
+            <i class="far fa-calendar-check"></i>
+            <span>To: {{ activity.dateFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" [style.width.%]="getProgressPercentage(activity)" 
+               [style.backgroundColor]="getProgressColor(getProgressPercentage(activity))"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Activities Pagination -->
+  <div class="pagination-container" *ngIf="equipeDetail.activites.length > activitiesPageSize">
+    <div class="pagination-info">
+      Showing {{ (activitiesCurrentPage - 1) * activitiesPageSize + 1 }} - 
+      {{ Math.min(activitiesCurrentPage * activitiesPageSize, equipeDetail.activites.length) }} 
+      of {{ equipeDetail.activites.length }} activities
+    </div>
+    
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="goToFirstActivitiesPage()" [disabled]="activitiesCurrentPage === 1">
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button class="page-btn" (click)="previousActivitiesPage()" [disabled]="activitiesCurrentPage === 1">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      
+      <div class="page-numbers">
+        <button *ngFor="let page of getActivitiesPageNumbers()" 
+                class="page-num" 
+                [class.active]="page === activitiesCurrentPage" 
+                (click)="goToActivitiesPage(page)">
+          {{ page }}
+        </button>
+      </div>
+      
+      <button class="page-btn" (click)="nextActivitiesPage()" [disabled]="activitiesCurrentPage === activitiesTotalPages">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <button class="page-btn" (click)="goToLastActivitiesPage()" [disabled]="activitiesCurrentPage === activitiesTotalPages">
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div *ngIf="equipeDetail.activites.length === 0" class="empty-state">
+    <i class="fas fa-tasks-slash"></i>
+    <p>No activities assigned to this team</p>
+  </div>
+</div>
+
+
+<!-- Performance Tab -->
+<div *ngIf="selectedTab === 'performance'" class="performance-tab">
+  <div class="performance-header">
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <i class="fas fa-chart-line"></i>
+          <h4>Productivity Trend</h4>
+        </div>
+        <div class="chart-container">
+          <canvas baseChart
+            [data]="performanceChartData"
+            [options]="performanceChartOptions"
+            [type]="'line'">
+          </canvas>
+        </div>
+      </div>
+      
+      <div class="stats-card">
+        <div class="stats-header">
+          <i class="fas fa-chart-pie"></i>
+          <h4>Performance Summary</h4>
+        </div>
+        <div class="performance-stats">
+          <div class="stat-item">
+            <div class="stat-circle">
+              <span class="stat-number">{{ equipeDetail?.statistiques?.moyenneRendement | number:'1.0-0' }}%</span>
+              <span class="stat-label">Average Productivity</span>
+            </div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-info">
+              <span class="info-label">Total Working Hours</span>
+              <strong>{{ equipeDetail?.statistiques?.totalHeuresTravaillees | number:'1.0-0' }} hours</strong>
+            </div>
+            <div class="stat-info">
+              <span class="info-label">Total Records</span>
+              <strong>{{ teamRendements.length }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="rendements-table-wrapper">
+    <div class="table-header">
+      <h4><i class="fas fa-table"></i> Productivity Records</h4>
+      <!-- أضف هذا الزر -->
+      <button class="add-productivity-btn" (click)="openAddProductivityModal()">
+        <i class="fas fa-plus-circle"></i>
+        <span>Add Productivity Record</span>
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="rendements-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Report</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Duration (hours)</th>
+            <th>Productivity Value</th>
+            <th>Unit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rend of teamRendements">
+            <td>{{ rend.date | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="report-link" (click)="viewRapportDetail(getRapportById(rend.rapportId))">
+                View Report
+              </span>
+            </td>
+            <td>{{ rend.heureDebut }}</td>
+            <td>{{ rend.heureFin }}</td>
+            <td>{{ rend.dureeHeures | number:'1.1-1' }}</td>
+            <td>
+              <div class="rendement-value" [style.color]="getRendementColor(rend.valeurRendement)">
+                {{ rend.valeurRendement | number:'1.0-0' }}
+              </div>
+            </td>
+            <td>{{ rend.uniteRendement }}</td>
+          </tr>
+        </tbody>
+       </table>
+    </div>
+    
+    <div *ngIf="teamRendements.length === 0" class="empty-state">
+      <i class="fas fa-chart-line-slash"></i>
+      <p>No productivity records</p>
+      <button class="add-first-btn" (click)="openAddProductivityModal()">
+        <i class="fas fa-plus-circle"></i> Add First Record
+      </button>
+    </div>
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal-overlay" *ngIf="showAddMemberModal" (click)="closeAddMemberModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-user-plus"></i> Add Team Members</h5>
+      <button class="close-btn" (click)="closeAddMemberModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="selected-count" *ngIf="selectedEmployees.length > 0">
+        <i class="fas fa-check-circle"></i>
+        {{ selectedEmployees.length }} employee(s) selected
+      </div>
+      
+      <div class="employees-list">
+        <div *ngFor="let emp of availableEmployees" class="employee-item" 
+             (click)="toggleEmployeeSelection(emp)">
+          <div class="employee-check">
+            <i class="fas" [class.fa-check-square]="isEmployeeSelected(emp)" 
+               [class.fa-square]="!isEmployeeSelected(emp)"></i>
+          </div>
+          <div class="employee-avatar">
+            <div class="avatar-small">
+              {{ emp.prenom?.charAt(0) }}{{ emp.nom?.charAt(0) }}
+            </div>
+          </div>
+          <div class="employee-info">
+            <div class="employee-name">{{ emp.prenom }} {{ emp.nom }}</div>
+            <div class="employee-details">{{ emp.email }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddMemberModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitAddMembers()" [disabled]="selectedEmployees.length === 0">
+        <i class="fas fa-save"></i> Add {{ selectedEmployees.length }} Member(s)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Activity Modal -->
+<div class="modal-overlay" *ngIf="showAddActivityModal" (click)="closeAddActivityModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-tasks"></i> Add New Activity</h5>
+      <button class="close-btn" (click)="closeAddActivityModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="activityForm">
+      <div class="form-field">
+        <label>Select Activity *</label>
+        <select formControlName="activeId" class="form-input">
+          <option [value]="null">-- Select Activity --</option>
+          <option *ngFor="let act of availableActives" [value]="act.id">
+            {{ act.codeActive }} - {{ act.objectif }}
+          </option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Start Date *</label>
+        <input type="date" formControlName="dateDebut" class="form-input">
+      </div>
+      <div class="form-field">
+        <label>End Date (Optional)</label>
+        <input type="date" formControlName="dateFin" class="form-input">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddActivityModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitAddActivity()" [disabled]="activityForm.invalid">
+        <i class="fas fa-save"></i> Add Activity
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Team Modal -->
+<div class="modal-overlay" *ngIf="showEditEquipeModal" (click)="closeEditEquipeModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-edit"></i> Edit Team Information</h5>
+      <button class="close-btn" (click)="closeEditEquipeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="equipeForm">
+      <div class="form-field">
+        <label>Team Name *</label>
+        <input type="text" formControlName="nom" class="form-input" placeholder="Enter team name">
+      </div>
+      <div class="form-field">
+        <label>Activity Type *</label>
+        <select formControlName="type" class="form-input">
+          <option value="TOPOGRAPHIE">Topography</option>
+          <option value="LAYONNAGE">Layout</option>
+          <option value="ENERGISREMENT">Energization</option>
+          <option value="POSE">Installation</option>
+          <option value="RAMASSAGE">Collection</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeEditEquipeModal()">Cancel</button>
+      <button class="confirm-btn" (click)="saveEquipeChanges()" [disabled]="equipeForm.invalid">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Rapport Detail Modal -->
+<div class="modal-overlay" *ngIf="showRapportDetailModal" (click)="closeRapportDetailModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-file-alt"></i> Report Details - {{ selectedRapport?.titre }}</h5>
+      <button class="close-btn" (click)="closeRapportDetailModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- Report Info -->
+      <div class="report-info-section">
+        <div class="info-row">
+          <span class="info-label">Date:</span>
+          <span class="info-value">{{ formatDate(selectedRapport?.date) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Project:</span>
+          <span class="info-value">{{ selectedRapport?.projectName }}</span>
+        </div>
+        <div class="info-row full-width">
+          <span class="info-label">Summary:</span>
+          <p class="info-value report-summary">{{ selectedRapport?.resume }}</p>
+        </div>
+      </div>
+
+      <!-- Productivity Records Section -->
+      <div class="productivity-section">
+        <div class="section-header">
+          <h4><i class="fas fa-chart-line"></i> Productivity Records</h4>
+          <button class="add-productivity-btn" (click)="openAddRendementModal()">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add Record</span>
+          </button>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="productivity-stats" *ngIf="selectedRapportRendements.length > 0">
+          <div class="stat-card-mini">
+            <div class="stat-icon"><i class="fas fa-chart-simple"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">{{ calculateTotalProductivity() | number:'1.0-0' }}</div>
+              <div class="stat-label">Total Productivity</div>
+            </div>
+          </div>
+          <div class="stat-card-mini">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">{{ calculateTotalHours() | number:'1.1-1' }}</div>
+              <div class="stat-label">Total Hours</div>
+            </div>
+          </div>
+          <div class="stat-card-mini">
+            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">{{ selectedRapportRendements.length }}</div>
+              <div class="stat-label">Records</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Records Table -->
+        <div class="productivity-table-wrapper" *ngIf="selectedRapportRendements.length > 0">
+          <table class="productivity-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Duration</th>
+                <th>Value</th>
+                <th>Unit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rend of selectedRapportRendements">
+                <td>{{ formatDate(rend.date) }}</td>
+                <td>{{ formatTime(rend.heureDebut) }}</td>
+                <td>{{ formatTime(rend.heureFin) }}</td>
+                <td>{{ rend.dureeHeures | number:'1.1-1' }}h</td>
+                <td><strong>{{ rend.valeurRendement | number:'1.0-0' }}</strong></td>
+                <td>{{ rend.uniteRendement }}</td>
+                <td class="actions-cell">
+                  <button class="edit-record-btn" (click)="openEditRendementModal(rend)" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="delete-record-btn" (click)="deleteRendement(rend, $event)" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty Productivity State -->
+        <div *ngIf="selectedRapportRendements.length === 0" class="empty-productivity">
+          <i class="fas fa-chart-line"></i>
+          <p>No productivity records yet</p>
+          <small>Click "Add Record" to track team productivity</small>
+        </div>
+      </div>
+      
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeRapportDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Productivity Record Modal -->
+<div class="modal-overlay" *ngIf="showAddRendementModal" (click)="closeAddRendementModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas" [class.fa-plus-circle]="!editingRendementId" [class.fa-edit]="editingRendementId"></i> 
+        {{ editingRendementId ? 'Edit Productivity Record' : 'Add Productivity Record' }}
+      </h5>
+      <button class="close-btn" (click)="closeAddRendementModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="rendementForm">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Start Time *</label>
+          <input type="time" formControlName="heureDebut" class="form-input" step="60">
+        </div>
+        <div class="form-field">
+          <label>End Time *</label>
+          <input type="time" formControlName="heureFin" class="form-input" step="60">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label>Date *</label>
+          <input type="date" formControlName="date" class="form-input">
+        </div>
+        <div class="form-field">
+          <label>Unit *</label>
+          <select formControlName="uniteRendement" class="form-input">
+            <option value="m²">Square Meters (m²)</option>
+            <option value="km">Kilometers (km)</option>
+            <option value="m">Meters (m)</option>
+            <option value="unit">Units</option>
+            <option value="point">Points</option>
+            <option value="percentage">Percentage (%)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-field">
+        <label>Productivity Value *</label>
+        <input type="number" formControlName="valeurRendement" class="form-input" step="0.01" min="0" placeholder="Enter productivity value">
+      </div>
+      
+      <div class="info-message">
+        <i class="fas fa-info-circle"></i>
+        <small>Productivity records help track team performance and progress over time.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddRendementModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitRendement()" [disabled]="rendementForm.invalid">
+        <i class="fas fa-save"></i> {{ editingRendementId ? 'Update Record' : 'Add Record' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Productivity Record Modal (New) -->
+<div class="modal-overlay" *ngIf="showAddProductivityModal" (click)="closeAddProductivityModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-chart-line"></i> Add Productivity Record</h5>
+      <button class="close-btn" (click)="closeAddProductivityModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- Select Report -->
+      <div class="form-field">
+        <label>Select Report *</label>
+        <select [(ngModel)]="selectedRapportId" class="form-input" required>
+          <option [value]="null">-- Select Report --</option>
+          <option *ngFor="let rapport of teamRapports" [value]="rapport.id">
+            {{ rapport.titre }} ({{ rapport.date | date:'dd/MM/yyyy' }})
+          </option>
+        </select>
+      </div>
+      
+      <!-- Select Activity (from current team's activities) -->
+      <div class="form-field">
+        <label>Select Activity *</label>
+        <select [(ngModel)]="selectedActivityId" class="form-input" required>
+          <option [value]="null">-- Select Activity --</option>
+          <option *ngFor="let activity of equipeDetail?.activites" [value]="activity.id">
+            {{ activity.codeActive }} - {{ activity.objectif }}
+          </option>
+        </select>
+      </div>
+      
+      <hr class="divider" />
+      
+      <form [formGroup]="rendementForm">
+        <div class="form-row">
+          <div class="form-field">
+            <label>Start Time *</label>
+            <input type="time" formControlName="heureDebut" class="form-input" step="60">
+          </div>
+          <div class="form-field">
+            <label>End Time *</label>
+            <input type="time" formControlName="heureFin" class="form-input" step="60">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-field">
+            <label>Date *</label>
+            <input type="date" formControlName="date" class="form-input">
+          </div>
+          <div class="form-field">
+            <label>Unit *</label>
+            <select formControlName="uniteRendement" class="form-input">
+              <option value="m²">Square Meters (m²)</option>
+              <option value="km">Kilometers (km)</option>
+              <option value="m">Meters (m)</option>
+              <option value="unit">Units</option>
+              <option value="point">Points</option>
+              <option value="percentage">Percentage (%)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-field">
+          <label>Productivity Value *</label>
+          <input type="number" formControlName="valeurRendement" class="form-input" 
+                 step="0.01" min="0" placeholder="Enter productivity value">
+        </div>
+        
+        <div class="info-message">
+          <i class="fas fa-info-circle"></i>
+          <small>Productivity will be associated with the selected report and activity for this team.</small>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddProductivityModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitNewRendement()" [disabled]="!selectedRapportId || !selectedActivityId || rendementForm.invalid">
+        <i class="fas fa-save"></i> Add Record
+      </button>
+    </div>
+  </div>
+</div>

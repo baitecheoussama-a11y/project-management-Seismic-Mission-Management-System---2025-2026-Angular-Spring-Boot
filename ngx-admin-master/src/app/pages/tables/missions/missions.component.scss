@@ -1,0 +1,503 @@
+// mission-card.component.scss
+@import '../../../@theme/styles/themes';
+@import '~@angular/cdk/overlay-prebuilt.css';
+
+@include nb-install-component() {
+
+  .mission-card {
+    margin: 1.5rem;
+    border-radius: 20px;
+    background: nb-theme(background-basic-color-2);
+    box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+
+    &:hover {
+      box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+  }
+
+  .card-header-custom {
+    background: linear-gradient(135deg, nb-theme(color-primary-800), nb-theme(color-danger-600), nb-theme(color-warning-600));
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+    padding: 1.25rem 1.75rem;
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    animation: iconPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .card-title {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+
+    .subtitle-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .card-body-custom {
+    padding: 1.75rem;
+    background: nb-theme(background-basic-color-2);
+
+    ::ng-deep {
+      ng2-smart-table {
+        // Table wrapper
+        table {
+          border-collapse: separate;
+          border-spacing: 0;
+          width: 100%;
+          background: nb-theme(background-basic-color-2);
+          
+          thead {
+            tr {
+              background: nb-theme(background-basic-color-3);
+              
+              th {
+                padding: 1rem;
+                font-weight: 600;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: nb-theme(text-basic-color);
+                border-bottom: 2px solid nb-theme(color-warning-500);
+                transition: all 0.2s ease;
+                
+                &:first-child {
+                  border-top-left-radius: 12px;
+                }
+                
+                &:last-child {
+                  border-top-right-radius: 12px;
+                }
+              }
+            }
+          }
+          
+          tbody {
+            tr {
+              transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+              
+              &:hover {
+                background: linear-gradient(90deg, rgba(nb-theme(color-warning-500), 0.1) 0%, transparent 100%);
+                transform: scale(1.01);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+              }
+              
+              td {
+                padding: 1rem;
+                border-bottom: 1px solid nb-theme(border-basic-color-3);
+                color: nb-theme(text-basic-color);
+                font-size: 0.9rem;
+                transition: all 0.2s ease;
+              }
+            }
+          }
+        }
+        
+        // Action buttons
+        .nb-edit, .nb-trash, .nb-plus {
+          transition: all 0.2s ease;
+          
+          &:hover {
+            transform: scale(1.1);
+          }
+        }
+        
+        .nb-edit {
+          color: nb-theme(color-primary-500);
+          
+          &:hover {
+            color: nb-theme(color-primary-600);
+            filter: drop-shadow(0 2px 4px rgba(nb-theme(color-primary-500), 0.3));
+          }
+        }
+        
+        .nb-trash {
+          color: nb-theme(color-danger-500);
+          
+          &:hover {
+            color: nb-theme(color-danger-600);
+            filter: drop-shadow(0 2px 4px rgba(nb-theme(color-danger-500), 0.3));
+          }
+        }
+        
+        .nb-plus {
+          color: nb-theme(color-success-500);
+          
+          &:hover {
+            color: nb-theme(color-success-600);
+            filter: drop-shadow(0 2px 4px rgba(nb-theme(color-success-500), 0.3));
+          }
+        }
+        
+        // Inputs in edit mode
+        input, select {
+          border: 2px solid nb-theme(border-basic-color-3);
+          border-radius: 8px;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.9rem;
+          background: nb-theme(background-basic-color-3);
+          color: nb-theme(text-basic-color);
+          transition: all 0.2s ease;
+          
+          &:focus {
+            border-color: nb-theme(color-warning-500);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(nb-theme(color-warning-500), 0.1);
+          }
+        }
+        
+        // Confirm/Cancel buttons
+        .nb-checkmark {
+          color: nb-theme(color-success-500);
+          
+          &:hover {
+            transform: scale(1.1);
+          }
+        }
+        
+        .nb-close {
+          color: nb-theme(color-danger-500);
+          
+          &:hover {
+            transform: scale(1.1);
+          }
+        }
+        
+        // Pagination
+        .ng2-smart-pagination {
+          margin-top: 1.5rem;
+          
+          .page-link {
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            border: none;
+            background: nb-theme(background-basic-color-3);
+            color: nb-theme(text-basic-color);
+            transition: all 0.2s ease;
+            
+            &:hover {
+              background: nb-theme(color-warning-500);
+              color: white;
+              transform: translateY(-2px);
+            }
+          }
+          
+          .active .page-link {
+            background: linear-gradient(135deg, nb-theme(color-primary-800), nb-theme(color-danger-600));
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          }
+        }
+        
+        // Filter inputs
+        .ng2-smart-filter {
+          input {
+            border: 1px solid nb-theme(border-basic-color-3);
+            border-radius: 8px;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            background: nb-theme(background-basic-color-3);
+            color: nb-theme(text-basic-color);
+            
+            &:focus {
+              border-color: nb-theme(color-warning-500);
+              box-shadow: 0 0 0 3px rgba(nb-theme(color-warning-500), 0.1);
+            }
+          }
+        }
+        
+        // Add/Edit form styles
+        .ng2-smart-row {
+          .ng2-smart-cell {
+            .ng2-smart-action {
+              .ng2-smart-action-add-create {
+                background: nb-theme(color-success-500);
+                border-radius: 6px;
+                padding: 4px 12px;
+                color: white;
+                
+                &:hover {
+                  background: nb-theme(color-success-600);
+                  transform: translateY(-1px);
+                }
+              }
+              
+              .ng2-smart-action-add-cancel {
+                background: nb-theme(color-danger-500);
+                border-radius: 6px;
+                padding: 4px 12px;
+                color: white;
+                
+                &:hover {
+                  background: nb-theme(color-danger-600);
+                  transform: translateY(-1px);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    .mission-card {
+      margin: 1rem;
+    }
+    
+    .card-header-custom {
+      padding: 1rem;
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+    }
+    
+    .header-icon {
+      font-size: 1.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+    
+    .card-body-custom {
+      padding: 1rem;
+      
+      ::ng-deep ng2-smart-table {
+        table {
+          font-size: 0.8rem;
+          
+          th, td {
+            padding: 0.5rem;
+          }
+        }
+      }
+    }
+  }
+
+  // Loading animation
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .loading-row {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(90deg, nb-theme(background-basic-color-3) 0%, nb-theme(background-basic-color-4) 50%, nb-theme(background-basic-color-3) 100%);
+    background-size: 1000px 100%;
+  }
+
+  // Toastr custom styles
+  ::ng-deep .toast-container {
+    .toast-success {
+      background: linear-gradient(135deg, nb-theme(color-success-500), nb-theme(color-success-600));
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(nb-theme(color-success-500), 0.3);
+    }
+    
+    .toast-danger {
+      background: linear-gradient(135deg, nb-theme(color-danger-500), nb-theme(color-danger-600));
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(nb-theme(color-danger-500), 0.3);
+    }
+    
+    .toast-warning {
+      background: linear-gradient(135deg, nb-theme(color-warning-500), nb-theme(color-warning-600));
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(nb-theme(color-warning-500), 0.3);
+    }
+    
+    .toast-info {
+      background: linear-gradient(135deg, nb-theme(color-primary-500), nb-theme(color-primary-600));
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(nb-theme(color-primary-500), 0.3);
+    }
+  }
+
+  // View icon styles
+  .view-icon {
+    font-size: 1.2rem;
+    color: nb-theme(color-primary-500);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      transform: scale(1.2);
+      color: nb-theme(color-warning-500);
+    }
+  }
+
+  // Style for Nebular eye icon
+  ::ng-deep .view-icon {
+    nb-icon {
+      font-size: 1.2rem;
+      color: nb-theme(color-primary-500);
+      transition: all 0.2s ease;
+      
+      &:hover {
+        color: nb-theme(color-warning-500);
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  // Complete styling for the custom action button
+  ::ng-deep .ng2-smart-action-custom-view {
+    background: transparent;
+    border: none;
+    padding: 5px 8px;
+    margin: 0 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    
+    .view-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+    }
+    
+    &:hover {
+      background-color: rgba(nb-theme(color-primary-500), 0.1);
+      transform: translateY(-2px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Tooltip on hover
+  .view-icon {
+    position: relative;
+    
+    &::after {
+      content: "View mission";
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: nb-theme(background-basic-color-4);
+      color: nb-theme(text-basic-color);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
+  // View mission button style
+  ::ng-deep {
+    .view-mission-btn {
+      background: linear-gradient(135deg, nb-theme(color-primary-500), nb-theme(color-primary-600));
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: white;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+
+      i {
+        font-size: 0.85rem;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(nb-theme(color-primary-500), 0.4);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  // Responsive styling for view icon
+  @media (max-width: 768px) {
+    .view-icon {
+      font-size: 1rem;
+      width: 18px;
+      height: 18px;
+    }
+    
+    ::ng-deep .ng2-smart-action-custom-view {
+      padding: 3px 6px;
+    }
+  }
+}

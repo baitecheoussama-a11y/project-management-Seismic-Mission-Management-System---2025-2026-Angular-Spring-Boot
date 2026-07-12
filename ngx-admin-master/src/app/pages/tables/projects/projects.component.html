@@ -1,0 +1,36 @@
+<!-- Use the mission filter component with both outputs -->
+<!-- Use the mission filter component with both outputs -->
+<app-mission-filter 
+  [canViewAllProjects]="canViewAllProjects"
+  (missionChanged)="onMissionFilterChange($event)"
+  (filtersApplied)="onFiltersApplied($event)">
+</app-mission-filter>
+
+<!-- Main Card -->
+<nb-card class="project-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="folder-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Projects Management</h4>
+          <span class="card-subtitle" *ngIf="!canViewAllProjects">
+            <nb-icon icon="eye-outline" class="subtitle-icon"></nb-icon>
+            View Only Mode
+          </span>
+          <span class="card-subtitle" *ngIf="canViewAllProjects">
+            <nb-icon icon="globe-outline" class="subtitle-icon"></nb-icon>
+            All Missions View
+          </span>
+        </div>
+      </div>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

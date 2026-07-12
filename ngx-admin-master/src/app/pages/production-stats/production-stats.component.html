@@ -1,0 +1,208 @@
+<!-- pages/stats/production-stats/production-stats.component.html -->
+
+<div class="production-stats-container">
+  
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Date Range</label>
+      <div class="date-range">
+        <input type="date" [(ngModel)]="startDate" (change)="loadStats()" class="filter-input" />
+        <span>to</span>
+        <input type="date" [(ngModel)]="endDate" (change)="loadStats()" class="filter-input" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Quick Select</label>
+      <select (change)="quickSelectDate($event)" class="filter-select">
+        <option value="">Custom</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="quarter">This Quarter</option>
+        <option value="year">This Year</option>
+      </select>
+    </div>
+    <button class="refresh-btn" (click)="loadStats()">
+      <nb-icon icon="refresh-outline"></nb-icon>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading production statistics...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && stats" class="dashboard-content">
+    
+    <!-- KPI Cards -->
+    <div class="kpi-cards">
+      <div class="kpi-card">
+        <div class="kpi-icon production-records">
+          <nb-icon icon="file-text-outline"></nb-icon>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.totalProductionRecords || 0 }}</div>
+          <div class="kpi-label">Production Records</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon avg-productivity">
+          <nb-icon icon="trending-up-outline"></nb-icon>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.averageProductivity | number:'1.1-1' }}</div>
+          <div class="kpi-label">Avg Productivity (units/h)</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon active-teams">
+          <nb-icon icon="people-outline"></nb-icon>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.activeTeamsCount || 0 }}</div>
+          <div class="kpi-label">Active Teams</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon avg-duration">
+          <nb-icon icon="clock-outline"></nb-icon>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ formatDuration(stats.averageActivityDuration || 0) }}</div>
+          <div class="kpi-label">Avg Activity Duration</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="charts-row">
+      <!-- Production by Team -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="bar-chart-outline"></nb-icon> Production by Team</h4>
+          <span class="chart-subtitle">Total production per team</span>
+        </div>
+        <div class="chart-body">
+          <canvas #productionByTeamChart></canvas>
+        </div>
+      </div>
+
+      <!-- Production by Activity -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="bar-chart-outline"></nb-icon> Production by Activity</h4>
+          <span class="chart-subtitle">Total production per activity</span>
+        </div>
+        <div class="chart-body">
+          <canvas #productionByActivityChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="charts-row">
+      <!-- Production Trend -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="trending-up-outline"></nb-icon> Production Trend</h4>
+          <span class="chart-subtitle">Monthly production over time</span>
+        </div>
+        <div class="chart-body">
+          <canvas #productionTrendChart></canvas>
+        </div>
+      </div>
+
+      <!-- Production by Mission -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="pie-chart-outline"></nb-icon> Production by Mission</h4>
+          <span class="chart-subtitle">Distribution across missions</span>
+        </div>
+        <div class="chart-body">
+          <canvas #productionByMissionChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Productivity Charts -->
+    <div class="charts-row">
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <h4><nb-icon icon="bar-chart-outline"></nb-icon> Productivity by Team</h4>
+          <span class="chart-subtitle">Production efficiency per team (units/hour)</span>
+        </div>
+        <div class="chart-body">
+          <canvas #productivityByTeamChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tables Section -->
+    <div class="tables-section">
+      <!-- Top 5 Teams -->
+      <div class="table-card">
+        <div class="table-header">
+          <h4><nb-icon icon="star-outline"></nb-icon> Top 5 Teams</h4>
+          <span class="table-subtitle">Highest producing teams</span>
+        </div>
+        <div class="table-body">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>Production</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stats.top5Teams">
+                <td>{{ item.rank || $index + 1 }}</td>
+                <td><strong>{{ item.teamName }}</strong></td>
+                <td>{{ item.productionValue | number:'1.0-0' }}</td>
+              </tr>
+              <tr *ngIf="!stats.top5Teams?.length">
+                <td colspan="3" class="text-center">No data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top 5 Activities -->
+      <div class="table-card">
+        <div class="table-header">
+          <h4><nb-icon icon="star-outline"></nb-icon> Top 5 Activities</h4>
+          <span class="table-subtitle">Highest producing activities</span>
+        </div>
+        <div class="table-body">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Activity</th>
+                <th>Production</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stats.top5Activities">
+                <td>{{ item.rank || $index + 1 }}</td>
+                <td><strong>{{ item.activityCode }}</strong></td>
+                <td>{{ item.productionValue | number:'1.0-0' }}</td>
+              </tr>
+              <tr *ngIf="!stats.top5Activities?.length">
+                <td colspan="3" class="text-center">No data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

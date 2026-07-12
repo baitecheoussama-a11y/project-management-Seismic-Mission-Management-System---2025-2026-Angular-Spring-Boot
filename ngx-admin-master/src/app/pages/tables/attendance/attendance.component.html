@@ -1,0 +1,337 @@
+<!-- pages/attendance/attendance.component.html -->
+
+<div class="attendance-container">
+  <nb-card class="attendance-card">
+    <nb-card-header class="card-header-custom">
+      <div class="header-content">
+        <div class="title-section">
+          <nb-icon icon="clock-outline" class="header-icon"></nb-icon>
+          <div>
+            <h4 class="card-title">Attendance Management</h4>
+            <span class="card-subtitle">
+              <nb-icon icon="calendar-outline" class="subtitle-icon"></nb-icon>
+              Track employee attendance, absences, and late arrivals
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="today-btn" (click)="goToToday()">
+            <nb-icon icon="calendar-outline"></nb-icon>
+            Today
+          </button>
+        </div>
+      </div>
+    </nb-card-header>
+
+    <nb-card-body class="card-body-custom">
+      <!-- Date Navigation -->
+      <div class="date-navigation">
+        <button class="nav-btn" (click)="previousDay()">
+          <nb-icon icon="chevron-left-outline"></nb-icon>
+        </button>
+        <div class="date-display">
+          <nb-icon icon="calendar-outline" class="date-icon"></nb-icon>
+          <span class="date-text">{{ selectedDate | date:'EEEE, d MMMM y' }}</span>
+          <span class="date-badge" *ngIf="isToday()">Today</span>
+        </div>
+        <button class="nav-btn" (click)="nextDay()">
+          <nb-icon icon="chevron-right-outline"></nb-icon>
+        </button>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <nb-icon icon="people-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.totalEmployees }}</div>
+            <div class="stat-label">Total Employees</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon present" [style.background]="'#10b981'">
+            <nb-icon icon="checkmark-circle-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.present }}</div>
+            <div class="stat-label">Present</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon absent" [style.background]="'#ef4444'">
+            <nb-icon icon="close-circle-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.absent }}</div>
+            <div class="stat-label">Absent</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon late" [style.background]="'#f59e0b'">
+            <nb-icon icon="clock-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.late }}</div>
+            <div class="stat-label">Late</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon leave" [style.background]="'#3b82f6'">
+            <nb-icon icon="calendar-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.onLeave }}</div>
+            <div class="stat-label">On Leave</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon mission" [style.background]="'#8b5cf6'">
+            <nb-icon icon="briefcase-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.onMission }}</div>
+            <div class="stat-label">On Mission</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon not-recorded" [style.background]="'#94a3b8'">
+            <nb-icon icon="minus-circle-outline"></nb-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.notRecorded }}</div>
+            <div class="stat-label">Not Recorded</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Table -->
+      <div class="attendance-table-wrapper">
+        <div class="table-header">
+          <div class="header-left">
+            <div class="selection-controls">
+              <!-- Select All Checkbox -->
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  [checked]="isAllSelected()" 
+                  [indeterminate]="isSomeSelected()"
+                  (change)="toggleSelectAll()"
+                />
+                <span class="checkmark"></span>
+              </label>
+              <span class="employee-count">{{ filteredPointages.length }} employees</span>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="filter-group">
+              <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="filter-select">
+                <option value="all">All Status</option>
+                <option value="PRESENT">Present</option>
+                <option value="ABSENT">Absent</option>
+                <option value="RETARD">Late</option>
+                <option value="CONGE">On Leave</option>
+                <option value="MISSION">On Mission</option>
+                <option value="NOT_RECORDED">Not Recorded</option>
+              </select>
+            </div>
+            <div class="search-box">
+              <nb-icon icon="search-outline" class="search-icon"></nb-icon>
+              <input 
+                type="text" 
+                placeholder="Search employee..." 
+                [(ngModel)]="searchTerm"
+                (input)="applyFilters()"
+              />
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div class="bulk-actions" *ngIf="selectedCount > 0">
+              <span class="selected-count">{{ selectedCount }} selected</span>
+              <select class="bulk-status-select" [(ngModel)]="bulkStatus" (change)="applyBulkUpdate()">
+                <option value="">Update Status...</option>
+                <option value="PRESENT">✅ Present</option>
+                <option value="ABSENT">❌ Absent</option>
+                <option value="RETARD">🕐 Late</option>
+                <option value="CONGE">📅 On Leave</option>
+                <option value="MISSION">💼 On Mission</option>
+              </select>
+            </div>
+
+            <button class="mark-all-btn" (click)="markAllPresent()">
+              <nb-icon icon="checkmark-outline"></nb-icon>
+              Mark All Present
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th class="checkbox-col">
+                  <label class="checkbox-container">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isAllSelected()" 
+                      [indeterminate]="isSomeSelected()"
+                      (change)="toggleSelectAll()"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
+                </th>
+                <th>#</th>
+                <th>Employee</th>
+                <th>Function</th>
+                <th>Status</th>
+                <th>Motif</th>
+                <th>Remarque</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedPointages; let i = index">
+                <td class="checkbox-col">
+                  <label class="checkbox-container">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isSelected(item)"
+                      (change)="toggleSelection(item)"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
+                </td>
+                <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+                <td>
+                  <div class="employee-info">
+                    <div class="avatar" [style.background]="getAvatarColor(item)">
+                      {{ getInitials(item) }}
+                    </div>
+                    <div>
+                      <div class="employee-name">{{ item.employePrenom }} {{ item.employeNom }}</div>
+                      <div class="employee-email">{{ item.employeEmail || '' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ item.fonctionNom || '-' }}</td>
+                <td>
+                  <span class="status-badge" [style.background]="item.statusColor || '#94a3b8'">
+                    <span class="status-dot" [style.background]="item.statusColor || '#94a3b8'"></span>
+                    {{ item.statusLabel || 'Not Recorded' }}
+                  </span>
+                </td>
+                <td>{{ item.motifAbsent || '-' }}</td>
+                <td>{{ item.remarque || '-' }}</td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn edit-btn" (click)="editPointage(item)" title="Edit">
+                      <nb-icon icon="edit-outline"></nb-icon>
+                    </button>
+                    <button class="action-btn delete-btn" (click)="deletePointage(item)" title="Delete">
+                      <nb-icon icon="trash-2-outline"></nb-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="paginatedPointages.length === 0">
+                <td colspan="8" class="text-center empty-state">
+                  <nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+                  <p>No attendance records found</p>
+                  <small>Click "Mark All Present" to add attendance for all employees</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" *ngIf="totalPages > 1">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+            {{ Math.min(currentPage * pageSize, filteredPointages.length) }} 
+            of {{ filteredPointages.length }} employees
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="goToPage(1)" [disabled]="currentPage === 1">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" 
+                      class="page-num" 
+                      [class.active]="page === currentPage"
+                      (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="page-btn" (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nb-card-body>
+  </nb-card>
+</div>
+
+<!-- Edit Pointage Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><nb-icon icon="edit-outline"></nb-icon> Edit Attendance</h5>
+      <button class="close-btn" (click)="closeEditModal()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="editingPointage">
+      <div class="form-field">
+        <label>Employee</label>
+        <input type="text" class="form-input" [value]="editingPointage.employePrenom + ' ' + editingPointage.employeNom" disabled>
+      </div>
+      <div class="form-field">
+        <label>Date</label>
+        <input type="date" class="form-input" [value]="editingPointage.datePointage" disabled>
+      </div>
+      <div class="form-field">
+        <label>Status *</label>
+        <select [(ngModel)]="editingPointage.status" class="form-input">
+          <option value="PRESENT">✅ Present</option>
+          <option value="ABSENT">❌ Absent</option>
+          <option value="RETARD">🕐 Late</option>
+          <option value="CONGE">📅 On Leave</option>
+          <option value="MISSION">💼 On Mission</option>
+        </select>
+      </div>
+      <div class="form-field" *ngIf="editingPointage.status === 'ABSENT' || editingPointage.status === 'RETARD'">
+        <label>Motif (Reason)</label>
+        <input type="text" class="form-input" [(ngModel)]="editingPointage.motifAbsent" placeholder="Enter reason...">
+      </div>
+      <div class="form-field">
+        <label>Remarque (Notes)</label>
+        <textarea class="form-input" [(ngModel)]="editingPointage.remarque" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeEditModal()">Cancel</button>
+      <button class="confirm-btn" (click)="saveEdit()" [disabled]="!editingPointage?.status">
+        <nb-icon icon="checkmark-outline"></nb-icon>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>

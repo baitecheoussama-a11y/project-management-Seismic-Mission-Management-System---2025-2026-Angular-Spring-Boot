@@ -1,0 +1,28 @@
+<!-- pages/fonctions/fonction-table/fonction-table.component.html -->
+<nb-card class="fonctions-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="briefcase-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Functions Management</h4>
+          <span class="card-subtitle">
+            <nb-icon icon="people-outline" class="subtitle-icon"></nb-icon>
+            Manage job functions and department roles
+          </span>
+        </div>
+      </div>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)"
+      (userRowSelect)="viewEmployes($event.data)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

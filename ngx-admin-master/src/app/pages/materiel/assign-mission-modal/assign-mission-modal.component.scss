@@ -1,0 +1,177 @@
+// assign-mission-modal.component.scss
+@import '../../../@theme/styles/themes';
+
+@include nb-install-component() {
+  .assign-mission-modal {
+    width: 600px;
+    max-width: 90vw;
+    border-radius: 20px;
+
+    nb-card-header {
+      background: linear-gradient(135deg, nb-theme(background-basic-color-2), nb-theme(background-basic-color-3));
+      border-bottom: 2px solid nb-theme(border-basic-color-3);
+      padding: 16px 20px;
+    }
+
+    nb-card-body {
+      padding: 24px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    nb-card-footer {
+      padding: 16px 20px;
+      border-top: 1px solid nb-theme(border-basic-color-3);
+    }
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .header-icon {
+        font-size: 1.8rem;
+        color: nb-theme(color-primary-500);
+      }
+
+      h4 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .selected-materiels {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid nb-theme(border-basic-color-3);
+
+    h5 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      font-size: 0.95rem;
+      color: nb-theme(text-hint-color);
+    }
+
+    .materiel-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: rgba(nb-theme(color-primary-500), 0.1);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        
+        nb-icon {
+          font-size: 0.9rem;
+          color: nb-theme(color-primary-500);
+        }
+      }
+    }
+  }
+
+  .assign-form {
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-field {
+      margin-bottom: 20px;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        
+        nb-icon {
+          font-size: 1rem;
+          color: nb-theme(color-primary-500);
+        }
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: nb-theme(background-basic-color-2);
+        border: 2px solid nb-theme(border-basic-color-3);
+        border-radius: 10px;
+        color: nb-theme(text-basic-color);
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: nb-theme(color-primary-500);
+        }
+      }
+
+      small {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.75rem;
+        color: nb-theme(color-danger-500);
+      }
+    }
+
+    .info-box {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(nb-theme(color-info-500), 0.1);
+      border-radius: 12px;
+      margin-top: 16px;
+
+      nb-icon {
+        font-size: 1.2rem;
+        color: nb-theme(color-info-500);
+      }
+
+      .info-content {
+        flex: 1;
+        
+        strong {
+          display: block;
+          margin-bottom: 4px;
+          font-size: 0.85rem;
+        }
+        
+        p {
+          margin: 0;
+          font-size: 0.85rem;
+          color: nb-theme(text-hint-color);
+        }
+      }
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}

@@ -1,0 +1,13 @@
+.view-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #00d68f;
+  transition: 0.2s;
+}
+
+.view-btn:hover {
+  transform: scale(1.2);
+  color: #00b894;
+}

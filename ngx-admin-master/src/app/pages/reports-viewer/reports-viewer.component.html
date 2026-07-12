@@ -1,0 +1,290 @@
+<div class="reports-viewer-container">
+  
+  <!-- Mobile Toggle Button -->
+  <button *ngIf="isMobile && !showSidebar" class="mobile-toggle-btn" (click)="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+    <span>Projects</span>
+  </button>
+
+  <!-- Sidebar - Projects List -->
+  <div class="projects-sidebar" [class.collapsed]="!showSidebar">
+    <div class="sidebar-header">
+      <div class="header-content">
+        <i class="fas fa-project-diagram sidebar-icon"></i>
+        <h3>Projects</h3>
+        <span class="project-count">{{ projects.length }}</span>
+      </div>
+      <button *ngIf="isMobile" class="close-sidebar" (click)="toggleSidebar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="sidebar-search">
+      <i class="fas fa-search search-icon"></i>
+      <input 
+        type="text" 
+        placeholder="Search projects..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput()"
+      />
+    </div>
+
+    <div class="projects-list">
+      <div *ngIf="projects.length === 0" class="no-projects">
+        <i class="fas fa-folder-open"></i>
+        <p>No projects found</p>
+      </div>
+      
+      <div *ngFor="let project of projects" 
+           class="project-item" 
+           [class.active]="selectedProject?.id === project.id"
+           (click)="selectProject(project)">
+        <div class="project-avatar" [ngClass]="getProjectStatusClass(project)">
+          <i [ngClass]="getProjectStatusIcon(project)"></i>
+        </div>
+        <div class="project-info">
+          <div class="project-name">{{ project.nom }}</div>
+          <div class="project-meta">
+            <span class="project-code">{{ project.missionCode || 'N/A' }}</span>
+            <span class="project-progress">{{ project.progression || 0 }}%</span>
+          </div>
+        </div>
+        <div class="project-status-dot" [ngClass]="getProjectStatusClass(project)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" [class.sidebar-collapsed]="!showSidebar">
+    
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading reports...</p>
+    </div>
+    
+    <div *ngIf="!isLoading">
+      
+      <!-- Mission Filter -->
+      <div *ngIf="canViewAllProjects" class="mission-filter-wrapper">
+        <div class="mission-filter">
+          <div class="filter-label">
+            <i class="fas fa-bullseye"></i>
+            <span>Mission</span>
+          </div>
+          <select [(ngModel)]="selectedMissionId" (change)="onMissionFilterChange()" class="mission-select">
+            <option value="all">🌐 All Missions</option>
+            <option *ngFor="let mission of missions" [value]="mission.id.toString()">
+              🚀 {{ mission.codeMission }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Project Header -->
+      <div *ngIf="selectedProject" class="project-header">
+        <div class="project-header-left">
+          <div class="project-icon-large" [ngClass]="getProjectStatusClass(selectedProject)">
+            <i [ngClass]="getProjectStatusIcon(selectedProject)"></i>
+          </div>
+          <div class="project-header-info">
+            <h1>{{ selectedProject.nom }}</h1>
+            <div class="project-badges">
+              <span class="badge mission-badge">
+                <i class="fas fa-rocket"></i> {{ selectedProject.missionCode }}
+              </span>
+              <span class="badge progress-badge" [style.background]="getProgressColor(selectedProject.progression)">
+                <i class="fas fa-chart-line"></i> {{ selectedProject.progression }}%
+              </span>
+              <span class="badge status-badge" [ngClass]="getProjectStatusClass(selectedProject)">
+                <i [ngClass]="getProjectStatusIcon(selectedProject)"></i>
+                {{ getProjectStatusText(selectedProject) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <p class="project-description">{{ selectedProject.description || 'No description available' }}</p>
+      </div>
+
+      <!-- Reports Section -->
+      <div *ngIf="selectedProject" class="reports-section">
+        
+        <!-- Reports Header -->
+        <div class="reports-header">
+          <div class="reports-title">
+            <i class="fas fa-file-alt"></i>
+            <h3>Reports</h3>
+            <span class="reports-count">{{ filteredReports.length }}</span>
+          </div>
+
+          <div class="reports-actions">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input 
+                type="text" 
+                placeholder="Search reports..."
+                [(ngModel)]="searchTerm"
+                (input)="onSearchInput()"
+              />
+              <button *ngIf="searchTerm" class="clear-search" (click)="clearSearch()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <button class="filter-toggle-btn" (click)="toggleFilters()" [class.active]="showFilters">
+              <i class="fas fa-sliders-h"></i>
+              <span>Filters</span>
+              <i class="fas" [class.fa-chevron-down]="!showFilters" [class.fa-chevron-up]="showFilters"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Filters -->
+        <div class="advanced-filters" *ngIf="showFilters">
+          <div class="filter-group">
+            <label>Sort By</label>
+            <select [(ngModel)]="sortBy" (change)="applyFilters()">
+              <option value="date">Date</option>
+              <option value="title">Title</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Order</label>
+            <select [(ngModel)]="sortOrder" (change)="applyFilters()">
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>From</label>
+            <input type="date" [(ngModel)]="dateFrom" (change)="applyFilters()" />
+          </div>
+
+          <div class="filter-group">
+            <label>To</label>
+            <input type="date" [(ngModel)]="dateTo" (change)="applyFilters()" />
+          </div>
+
+          <button class="reset-filters-btn" (click)="resetFilters()">
+            <i class="fas fa-undo-alt"></i>
+            Reset
+          </button>
+        </div>
+
+        <!-- Reports Grid -->
+        <div class="reports-grid" *ngIf="filteredReports.length > 0">
+          <div *ngFor="let report of paginatedReports" class="report-card" (click)="viewReportDetail(report)">
+            <div class="report-card-header">
+              <div class="report-icon-wrapper">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="report-card-title">
+                <h4>{{ report.titre }}</h4>
+                <div class="report-date">
+                  <i class="far fa-calendar-alt"></i>
+                  {{ formatDate(report.date) }}
+                </div>
+              </div>
+            </div>
+            <div class="report-card-body">
+              <p>{{ (report.resume || 'No content') | slice:0:120 }}{{ (report.resume || '').length > 120 ? '...' : '' }}</p>
+            </div>
+            <div class="report-card-footer">
+              <span class="readonly-badge">
+                <i class="fas fa-lock"></i> Read Only
+              </span>
+              <span class="view-link">
+                View Details <i class="fas fa-arrow-right"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredReports.length === 0" class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-file-alt-slash"></i>
+          </div>
+          <h3>No Reports Found</h3>
+          <p>{{ reports.length === 0 ? 'No reports have been created for this project yet.' : 'No reports match your search criteria.' }}</p>
+          <button *ngIf="isFilterApplied()" class="clear-filters-btn" (click)="resetFilters()">
+            <i class="fas fa-undo-alt"></i> Clear Filters
+          </button>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" *ngIf="filteredReports.length > pageSize">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+            {{ Math.min(currentPage * pageSize, filteredReports.length) }} 
+            of {{ filteredReports.length }}
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="goToPage(1)" [disabled]="currentPage === 1">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" 
+                      class="page-num" 
+                      [class.active]="page === currentPage"
+                      (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="page-btn" (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal-overlay" *ngIf="showReportDetail" (click)="closeReportDetail()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-alt"></i> Report Details</h3>
+      <button class="close-btn" (click)="closeReportDetail()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedReport">
+      <div class="report-detail-title">
+        <h2>{{ selectedReport.titre }}</h2>
+        <div class="report-detail-meta">
+          <span><i class="far fa-calendar-alt"></i> {{ formatDate(selectedReport.date) }}</span>
+          <span><i class="fas fa-project-diagram"></i> {{ selectedReport.projectName }}</span>
+          <span><i class="fas fa-rocket"></i> {{ selectedReport.missionCode }}</span>
+        </div>
+      </div>
+      
+      <div class="report-detail-content">
+        <h4><i class="fas fa-align-left"></i> Summary</h4>
+        <p>{{ selectedReport.resume }}</p>
+      </div>
+
+      <div class="report-detail-footer">
+        <div class="readonly-notice">
+          <i class="fas fa-lock"></i>
+          <span>This is a read-only view. You cannot edit or delete this report.</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-close" (click)="closeReportDetail()">Close</button>
+    </div>
+  </div>
+</div>

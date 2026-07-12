@@ -1,0 +1,33 @@
+<!-- smart-table.component.html -->
+<nb-card class="employes-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="people-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Employees Management</h4>
+          <span class="card-subtitle">
+            <nb-icon icon="person-add-outline" class="subtitle-icon"></nb-icon>
+            <span *ngIf="!isFilteredByFonction">Manage all employees, incidents and medical records</span>
+            <span *ngIf="isFilteredByFonction">
+              Showing employees for function: <strong>{{ fonctionName }}</strong>
+              <button nbButton size="tiny" status="info" (click)="clearFonctionFilter()" class="clear-filter-btn">
+                <nb-icon icon="close-outline"></nb-icon> Clear Filter
+              </button>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

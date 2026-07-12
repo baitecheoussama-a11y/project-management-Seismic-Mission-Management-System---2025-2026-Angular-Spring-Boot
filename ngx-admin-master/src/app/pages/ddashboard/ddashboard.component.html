@@ -1,0 +1,253 @@
+<!-- pages/dashboard/dashboard.component.html -->
+
+<div class="dashboard-container">
+  <!-- Date Range Filter -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Date Range</label>
+      <div class="date-range">
+        <input type="date" [(ngModel)]="startDate" (change)="loadStats()" class="filter-input" />
+        <span>to</span>
+        <input type="date" [(ngModel)]="endDate" (change)="loadStats()" class="filter-input" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Quick Select</label>
+      <select (change)="quickSelectDate($event)" class="filter-select">
+        <option value="">Custom</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="quarter">This Quarter</option>
+        <option value="year">This Year</option>
+      </select>
+    </div>
+    <button class="refresh-btn" (click)="loadStats()">
+      <nb-icon icon="refresh-outline"></nb-icon>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading statistics...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && stats" class="dashboard-content">
+    
+    <!-- Stats Cards Row -->
+    <div class="stats-cards">
+      <!-- Card 1: Total Cost -->
+      <div class="stat-card total-cost">
+        <div class="card-icon">
+          <nb-icon icon="credit-card-outline"></nb-icon>
+        </div>
+        <div class="card-content">
+          <div class="card-value">{{ stats.totalCost | number:'1.0-0' }} DA</div>
+          <div class="card-label">Total Consumption Cost</div>
+        </div>
+      </div>
+
+      <!-- Card 2: Most Consumed Resource -->
+      <div class="stat-card most-consumed">
+        <div class="card-icon">
+          <nb-icon icon="trending-up-outline"></nb-icon>
+        </div>
+        <div class="card-content">
+          <div *ngIf="getMostConsumedRessource() as most; else noMostConsumed">
+            <div class="card-value">{{ most.name }}</div>
+            <div class="card-label">{{ most.quantity | number:'1.0-0' }} units consumed</div>
+          </div>
+          <ng-template #noMostConsumed>
+            <div class="card-value">-</div>
+            <div class="card-label">No data</div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Card 3: Average Cost per Resource -->
+      <div class="stat-card avg-cost">
+        <div class="card-icon">
+          <nb-icon icon="bar-chart-outline"></nb-icon>
+        </div>
+        <div class="card-content">
+          <div class="card-value">{{ getAverageCostPerRessource() | number:'1.0-0' }} DA</div>
+          <div class="card-label">Average Cost / Resource</div>
+        </div>
+      </div>
+
+      <!-- Card 4: Resource Types -->
+      <div class="stat-card resource-types">
+        <div class="card-icon">
+          <nb-icon icon="layers-outline"></nb-icon>
+        </div>
+        <div class="card-content">
+          <div class="card-value">{{ getTotalRessourceTypes() }}</div>
+          <div class="card-label">Resource Types Used</div>
+        </div>
+      </div>
+
+      <!-- Card 5: Missions with Consumption -->
+      <div class="stat-card missions">
+        <div class="card-icon">
+          <nb-icon icon="briefcase-outline"></nb-icon>
+        </div>
+        <div class="card-content">
+          <div class="card-value">{{ getTotalMissionsWithConsumption() }}</div>
+          <div class="card-label">Missions with Consumption</div>
+        </div>
+      </div>
+
+      <!-- Card 6: Critical Stock -->
+      <div class="stat-card critical-stock">
+        <div class="card-icon">
+          <nb-icon icon="alert-triangle-outline"></nb-icon>
+        </div>
+        <div class="card-content">
+          <div class="card-value" [style.color]="stats.criticalStock.length > 0 ? '#ef4444' : '#10b981'">
+            {{ stats.criticalStock.length }}
+          </div>
+          <div class="card-label">
+            {{ stats.criticalStock.length > 0 ? 'Critical Stock Items' : 'All Stock Healthy' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="charts-row">
+      <!-- Consumption by Ressource -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="bar-chart-outline"></nb-icon> Consumption by Ressource</h4>
+          <span class="chart-subtitle">Total quantity consumed per ressource</span>
+        </div>
+        <div class="chart-body">
+          <canvas #consumptionByRessourceChart></canvas>
+        </div>
+      </div>
+
+      <!-- Cost by Ressource -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="cash-outline"></nb-icon> Cost by Ressource</h4>
+          <span class="chart-subtitle">Total cost per ressource (DA)</span>
+        </div>
+        <div class="chart-body">
+          <canvas #costByRessourceChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="charts-row">
+      <!-- Consumption by Mission -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="pie-chart-outline"></nb-icon> Consumption by Mission</h4>
+          <span class="chart-subtitle">Distribution of consumption across missions</span>
+        </div>
+        <div class="chart-body">
+          <canvas #consumptionByMissionChart></canvas>
+        </div>
+      </div>
+
+      <!-- Consumption by Type -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="bar-chart-outline"></nb-icon> Consumption by Type</h4>
+          <span class="chart-subtitle">Total consumption per ressource type</span>
+        </div>
+        <div class="chart-body">
+          <canvas #consumptionByTypeChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 3 -->
+    <div class="charts-row">
+      <!-- Consumption Trend -->
+      <div class="chart-card full-width">
+        <div class="chart-header">
+          <h4><nb-icon icon="trending-up-outline"></nb-icon> Consumption Trend</h4>
+          <span class="chart-subtitle">Monthly consumption over time</span>
+        </div>
+        <div class="chart-body">
+          <canvas #consumptionTrendChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="bottom-section">
+      <!-- Top 5 Ressources -->
+      <div class="table-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="star-outline"></nb-icon> Top 5 Ressources</h4>
+          <span class="chart-subtitle">Most consumed ressources</span>
+        </div>
+        <div class="table-body">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ressource</th>
+                <th>Quantity</th>
+                <th>Cost (DA)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stats.top5Ressources; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td><strong>{{ item.label }}</strong></td>
+                <td>{{ item.value | number:'1.0-0' }}</td>
+                <td>{{ item.cost | number:'1.0-0' }}</td>
+              </tr>
+              <tr *ngIf="stats.top5Ressources.length === 0">
+                <td colspan="4" class="text-center">No data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Critical Stock -->
+      <div class="table-card">
+        <div class="chart-header">
+          <h4><nb-icon icon="alert-triangle-outline"></nb-icon> Critical Stock</h4>
+          <span class="chart-subtitle">Ressources with low stock</span>
+        </div>
+        <div class="table-body">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ressource</th>
+                <th>Stock</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stats.criticalStock; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td><strong>{{ item.label }}</strong></td>
+                <td>{{ item.value | number:'1.0-0' }}</td>
+                <td>
+                  <span class="status-badge critical">Critical</span>
+                </td>
+              </tr>
+              <tr *ngIf="stats.criticalStock.length === 0">
+                <td colspan="4" class="text-center success">
+                  <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                  All stock levels are healthy
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,265 @@
+<div class="dashboard-container">
+  
+  <!-- Welcome Header with Animation -->
+  <div class="welcome-header slide-down">
+    <div class="welcome-text">
+      <div class="greeting">
+        <nb-icon icon="sun-outline" class="sun-icon spin-slow"></nb-icon>
+        <h1>Welcome back, {{ userName }}!</h1>
+      </div>
+      <p class="subtitle">Here's what's happening with your system today</p>
+    </div>
+    <div class="header-stats">
+      <div class="date-badge">
+        <nb-icon icon="calendar-outline"></nb-icon>
+        <span>{{ currentTime | date:'EEEE, MMMM d, yyyy' }}</span>
+      </div>
+      <div class="time-badge">
+        <nb-icon icon="clock-outline"></nb-icon>
+        <span>{{ currentTime | date:'h:mm a' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-overlay">
+    <nb-spinner size="large" status="primary"></nb-spinner>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <div *ngIf="!loading && stats" class="dashboard-content fade-in">
+    
+    <!-- Stats Cards Row -->
+    <div class="stats-grid">
+      <div class="stat-card" (click)="navigateTo('/pages/tables/smart-table')">
+        <div class="stat-icon employees">
+          <nb-icon icon="people-outline"></nb-icon>
+        </div>
+        <div class="stat-details">
+          <h3>{{ stats.totalEmployees }}</h3>
+          <p>Total Employees</p>
+          <span class="trend">
+            <nb-icon icon="trending-up-outline"></nb-icon>
+            +12% this month
+          </span>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/pages/tables/comptes')">
+        <div class="stat-icon accounts">
+          <nb-icon icon="shield-outline"></nb-icon>
+        </div>
+        <div class="stat-details">
+          <h3>{{ stats.totalAccounts }}</h3>
+          <p>User Accounts</p>
+          <div class="status-breakdown">
+            <span class="active-dot"></span>
+            <span>{{ stats.activeAccounts }} active</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/pages/tables/contrats')">
+        <div class="stat-icon contracts">
+          <nb-icon icon="file-text-outline"></nb-icon>
+        </div>
+        <div class="stat-details">
+          <h3>{{ stats.activeContracts }}</h3>
+          <p>Active Contracts</p>
+          <span class="trend warning" *ngIf="stats.expiringSoonContracts > 0">
+            <nb-icon icon="alert-triangle-outline"></nb-icon>
+            {{ stats.expiringSoonContracts }} expiring soon
+          </span>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/pages/tables/roles')">
+        <div class="stat-icon roles">
+          <nb-icon icon="people-outline"></nb-icon>
+        </div>
+        <div class="stat-details">
+          <h3>{{ stats.totalRoles }}</h3>
+          <p>System Roles</p>
+          <span class="trend neutral">
+            <nb-icon icon="minus-outline"></nb-icon>
+            Stable
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-grid">
+      <div class="chart-card zoom-in">
+        <div class="chart-header">
+          <nb-icon icon="pie-chart-outline"></nb-icon>
+          <h4>Accounts Overview</h4>
+        </div>
+        <div class="chart-body">
+          <canvas id="accountsChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card zoom-in" style="animation-delay: 0.1s">
+        <div class="chart-header">
+          <nb-icon icon="bar-chart-outline"></nb-icon>
+          <h4>Roles Distribution</h4>
+        </div>
+        <div class="chart-body">
+          <canvas id="rolesChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card zoom-in" style="animation-delay: 0.2s">
+        <div class="chart-header">
+          <nb-icon icon="trending-up-outline"></nb-icon>
+          <h4>Employee Growth</h4>
+        </div>
+        <div class="chart-body">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="alerts-section" *ngIf="stats.alerts?.length > 0">
+      <div class="section-title">
+        <nb-icon icon="bell-outline"></nb-icon>
+        <h4>Notifications</h4>
+      </div>
+      <div class="alerts-list">
+        <div *ngFor="let alert of stats.alerts" 
+             class="alert-item slide-right" 
+             [class]="getAlertClass(alert.type)">
+          <nb-icon [icon]="getAlertIcon(alert.type)"></nb-icon>
+          <span>{{ alert.message }}</span>
+          <button *ngIf="alert.action" 
+                  nbButton size="tiny" 
+                  (click)="navigateTo(alert.actionLink, alert.actionParams)">
+            {{ alert.action }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activities & Quick Actions Row -->
+    <div class="bottom-grid">
+      <!-- Activity Feed -->
+      <div class="activity-card">
+        <div class="section-title">
+          <nb-icon icon="activity-outline"></nb-icon>
+          <h4>Recent Activity</h4>
+        </div>
+        <div class="activity-list">
+          <div *ngFor="let activity of stats.recentActivities" 
+               class="activity-item fade-in">
+            <div class="activity-icon" [class]="activity.type">
+              <nb-icon [icon]="getActivityIcon(activity.type)"></nb-icon>
+            </div>
+            <div class="activity-details">
+              <p class="activity-message">{{ activity.message }}</p>
+              <span class="activity-time">{{ getTimeAgo(activity.timestamp) }}</span>
+            </div>
+          </div>
+          <div *ngIf="stats.recentActivities?.length === 0" class="empty-state">
+            <nb-icon icon="activity-outline"></nb-icon>
+            <p>No recent activity</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions-card">
+        <div class="section-title">
+          <nb-icon icon="flash-outline"></nb-icon>
+          <h4>Quick Actions</h4>
+        </div>
+        <div class="actions-grid">
+          <button nbButton status="primary" (click)="quickAction('addEmployee')">
+            <nb-icon icon="person-add-outline"></nb-icon>
+            Add Employee
+          </button>
+          <button nbButton status="success" (click)="quickAction('createAccount')">
+            <nb-icon icon="shield-outline"></nb-icon>
+            Create Account
+          </button>
+          <button nbButton status="info" (click)="quickAction('assignRole')">
+            <nb-icon icon="people-outline"></nb-icon>
+            Assign Role
+          </button>
+          <button nbButton status="warning" (click)="quickAction('addContract')">
+            <nb-icon icon="file-text-outline"></nb-icon>
+            Add Contract
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Employees Table with Pagination -->
+      <div class="recent-table-card">
+        <div class="section-title">
+          <nb-icon icon="people-outline"></nb-icon>
+          <h4>Recent Employees</h4>
+          <span class="total-count">({{ stats.recentEmployees?.length || 0 }} total)</span>
+        </div>
+        
+        <div class="recent-list">
+          <div *ngFor="let emp of paginatedEmployees" class="recent-item fade-in">
+            <div class="employee-avatar">
+              {{ (emp?.name || emp?.prenom + ' ' + emp?.nom)?.charAt(0) || '?' }}
+            </div>
+            <div class="employee-info">
+              <strong>{{ emp?.name || emp?.prenom + ' ' + emp?.nom }}</strong>
+              <small>{{ emp?.email }}</small>
+            </div>
+            <span class="employee-date">{{ getTimeAgo(emp?.createdAt) }}</span>
+          </div>
+          
+          <div *ngIf="stats.recentEmployees?.length === 0" class="empty-state">
+            <nb-icon icon="people-outline"></nb-icon>
+            <p>No employees found</p>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" *ngIf="totalPages > 1">
+          <div class="pagination-controls">
+            <!-- Previous Button -->
+            <button 
+              class="page-nav" 
+              [disabled]="currentPage === 1" 
+              (click)="goToPage(currentPage - 1)">
+              <nb-icon icon="chevron-left-outline"></nb-icon>
+            </button>
+            
+            <!-- Page Numbers -->
+            <div class="page-numbers">
+              <ng-container *ngFor="let page of pageNumbers">
+                <button 
+                  *ngIf="page !== '...'" 
+                  class="page-number" 
+                  [class.active]="page === currentPage"
+                  (click)="goToPage(page)">
+                  {{ page }}
+                </button>
+                <span *ngIf="page === '...'" class="ellipsis">...</span>
+              </ng-container>
+            </div>
+            
+            <!-- Next Button -->
+            <button 
+              class="page-nav" 
+              [disabled]="currentPage === totalPages" 
+              (click)="goToPage(currentPage + 1)">
+              <nb-icon icon="chevron-right-outline"></nb-icon>
+            </button>
+          </div>
+          
+          <div class="page-info">
+            Page {{ currentPage }} of {{ totalPages }} ({{ stats.recentEmployees?.length || 0 }} employees)
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

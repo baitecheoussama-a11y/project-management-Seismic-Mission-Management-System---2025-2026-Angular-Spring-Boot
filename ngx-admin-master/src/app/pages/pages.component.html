@@ -1,0 +1,9 @@
+<div class="pages-container">
+  <app-custom-sidebar 
+    [menuItems]="menu" 
+    (logout)="onLogout()"
+  ></app-custom-sidebar>
+  <div class="main-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

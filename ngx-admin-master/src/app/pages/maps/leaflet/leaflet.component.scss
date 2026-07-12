@@ -1,0 +1,29 @@
+// leaflet.component.scss - إضافة هذه الأنماط
+
+::ng-deep .custom-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+::ng-deep .custom-tooltip::before {
+  border-top-color: rgba(0, 0, 0, 0.85);
+}
+
+::ng-deep .project-marker {
+  background: transparent;
+  border: none;
+}
+
+::ng-deep .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+::ng-deep .leaflet-popup-content {
+  margin: 12px;
+  min-width: 200px;
+}

@@ -1,0 +1,352 @@
+<!-- src/app/pages/safety/events/events.component.html -->
+
+<div class="events-container">
+  
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <i class="fas fa-calendar-alt"></i>
+      <h1>Events Management</h1>
+    </div>
+    <div class="header-buttons">
+      <!-- Only show Manage Types button for authorized users -->
+      <button *ngIf="canManageEvents" class="btn-types" (click)="goToEventTypes()">
+        <i class="fas fa-tags"></i>
+        <span>Manage Types</span>
+      </button>
+      <!-- Only show New Event button for authorized users -->
+      <button *ngIf="canManageEvents" class="btn-add" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        <span>New Event</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Bar (same - visible to all) -->
+  <div class="filters-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        placeholder="Search by title, description or mission..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput()"
+      />
+      <button *ngIf="searchTerm" class="clear-btn" (click)="clearSearch()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <button class="filter-toggle-btn" (click)="toggleFilters()">
+      <i class="fas fa-filter"></i>
+      <span>Filters</span>
+      <i class="fas" [class.fa-chevron-down]="!showFilters" [class.fa-chevron-up]="showFilters"></i>
+    </button>
+
+    <div *ngIf="isFilterApplied()" class="filter-badge">
+      Filters Active
+    </div>
+
+
+    <div class="filter-field" *ngIf="canViewAllEvents">
+  <label><i class="fas fa-bullseye"></i> Mission</label>
+  <select [(ngModel)]="selectedMissionId" (change)="onMissionFilterChange()" class="filter-input">
+    <option value="all">All Missions</option>
+    <option *ngFor="let mission of missions" [value]="mission.id">
+      {{ mission.codeMission }} - {{ mission.description | slice:0:50 }}
+    </option>
+  </select>
+</div>
+  </div>
+
+  <!-- Advanced Filters (same - visible to all) -->
+  <div class="advanced-filters" *ngIf="showFilters">
+    <div class="filter-group">
+      <label>Status</label>
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="all">All</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="today">Today</option>
+        <option value="past">Past</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Event Type</label>
+      <select [(ngModel)]="typeFilter" (change)="applyFilters()">
+        <option value="all">All Types</option>
+        <option *ngFor="let type of eventTypes" [value]="type.id">
+          {{ type.nom }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Sort By</label>
+      <select [(ngModel)]="sortBy" (change)="applyFilters()">
+        <option value="date">Date</option>
+        <option value="titre">Title</option>
+        <option value="priority">Priority</option>
+        <option value="type">Type</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Order</label>
+      <select [(ngModel)]="sortOrder" (change)="applyFilters()">
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+      </select>
+    </div>
+
+    <button class="reset-filters-btn" (click)="resetFilters()">
+      <i class="fas fa-undo-alt"></i>
+      Reset
+    </button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Loading events...</p>
+  </div>
+
+  <!-- Events Grid -->
+  <div *ngIf="!isLoading" class="events-grid">
+    <div *ngFor="let event of paginatedEvents" class="event-card" [class]="getStatusBadgeClass(event)">
+      <div class="card-header">
+        <div class="priority-badge" [style.backgroundColor]="getPriorityColor(event.niveauPriorite)">
+          {{ getPriorityLabel(event.niveauPriorite) }}
+        </div>
+        <div class="status-badge" [class]="getStatusBadgeClass(event)">
+          {{ getStatusLabel(event) }}
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h3 class="event-title">{{ event.titre }}</h3>
+        <p class="event-description">{{ event.description || 'No description' }}</p>
+        
+        <div class="event-meta">
+          <div class="meta-item">
+            <i class="fas fa-calendar-day"></i>
+            <span>{{ formatDate(event.date) }}</span>
+          </div>
+          <div class="meta-item" *ngIf="event.heure">
+            <i class="fas fa-clock"></i>
+            <span>{{ formatTime(event.heure) }}</span>
+          </div>
+          <div class="meta-item" *ngIf="event.missionNom">
+            <i class="fas fa-rocket"></i>
+            <span>{{ event.missionNom }}</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-tag"></i>
+            <span>{{ event.typeEvenementNom || 'Uncategorized' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Only show Edit/Delete buttons for authorized users -->
+      <div class="card-actions" *ngIf="canManageEvents">
+        <button class="btn-edit" (click)="openEditModal(event)">
+          <i class="fas fa-edit"></i>
+          Edit
+        </button>
+        <button class="btn-delete" (click)="deleteEvent(event)">
+          <i class="fas fa-trash-alt"></i>
+          Delete
+        </button>
+      </div>
+      
+      <!-- Show read-only message for unauthorized users -->
+      <div class="card-actions-readonly" *ngIf="!canManageEvents">
+        <span class="readonly-badge">
+          <i class="fas fa-lock"></i>
+          Read Only
+        </span>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredEvents.length === 0" class="empty-state">
+      <i class="fas fa-calendar-times"></i>
+      <h3>No events found</h3>
+      <p *ngIf="canManageEvents">Start by creating your first event</p>
+      <p *ngIf="!canManageEvents">No events available</p>
+      <button *ngIf="canManageEvents" class="btn-add-first" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Create Event
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="filteredEvents.length > pageSize" class="pagination">
+    <div class="pagination-info">
+      Showing {{ (currentPage - 1) * pageSize + 1 }} to 
+      {{ Math.min(currentPage * pageSize, filteredEvents.length) }} 
+      of {{ filteredEvents.length }} events
+    </div>
+    
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <div class="page-numbers">
+        <button *ngFor="let page of getPageNumbers()" 
+                class="page-num" 
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </div>
+      <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Event Modal (same) -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> New Event</h3>
+      <button class="close-btn" (click)="closeAddModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="eventForm">
+        <!-- Same form fields -->
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Title *</label>
+            <input type="text" formControlName="titre" placeholder="Enter event title" />
+            <div class="error" *ngIf="eventForm.get('titre')?.invalid && eventForm.get('titre')?.touched">
+              Title is required (min 3 characters)
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea formControlName="description" rows="3" placeholder="Event description..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" formControlName="date" />
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <input type="time" formControlName="heure" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Associated Mission</label>
+            <select formControlName="missionId">
+              <option [value]="null">-- Select a mission --</option>
+              <option *ngFor="let mission of missions" [value]="mission.id">
+                {{ mission.codeMission }} - {{ mission.description }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Event Type *</label>
+            <select formControlName="typeEvenementId">
+              <option [value]="null">-- Select a type --</option>
+              <option *ngFor="let type of eventTypes" [value]="type.id">
+                {{ type.nom }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeAddModal()">Cancel</button>
+      <button class="btn-confirm" (click)="createEvent()" [disabled]="eventForm.invalid">
+        <i class="fas fa-save"></i> Create
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Event Modal (same) -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-edit"></i> Edit Event</h3>
+      <button class="close-btn" (click)="closeEditModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="eventForm">
+        <!-- Same form fields -->
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Title *</label>
+            <input type="text" formControlName="titre" placeholder="Enter event title" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea formControlName="description" rows="3" placeholder="Event description..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" formControlName="date" />
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <input type="time" formControlName="heure" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Associated Mission</label>
+            <select formControlName="missionId">
+              <option [value]="null">-- Select a mission --</option>
+              <option *ngFor="let mission of missions" [value]="mission.id">
+                {{ mission.codeMission }} - {{ mission.description }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Event Type *</label>
+            <select formControlName="typeEvenementId">
+              <option [value]="null">-- Select a type --</option>
+              <option *ngFor="let type of eventTypes" [value]="type.id">
+                {{ type.nom }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeEditModal()">Cancel</button>
+      <button class="btn-confirm" (click)="updateEvent()" [disabled]="eventForm.invalid">
+        <i class="fas fa-save"></i> Update
+      </button>
+    </div>
+  </div>
+</div>

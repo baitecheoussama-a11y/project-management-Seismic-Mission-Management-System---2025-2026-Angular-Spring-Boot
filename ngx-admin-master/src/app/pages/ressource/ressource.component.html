@@ -1,0 +1,351 @@
+<div class="ressource-container">
+  
+  <button class="toggle-sidebar-btn" (click)="toggleSidebar()" [class.collapsed]="sidebarCollapsed && !isMobile">
+    <nb-icon [icon]="sidebarCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+  </button>
+
+  <button *ngIf="isMobile && sidebarCollapsed" class="mobile-toggle-btn" (click)="toggleSidebar()">
+    <nb-icon icon="menu-outline"></nb-icon>
+  </button>
+
+  <!-- Sidebar -->
+  <div class="custom-sidebar" [class.collapsed]="sidebarCollapsed && !isMobile" [class.mobile-collapsed]="isMobile && sidebarCollapsed">
+    <div class="sidebar-header">
+      <div class="header-content">
+        <nb-icon icon="hard-drive-outline" class="header-icon"></nb-icon>
+        <h3>Categories</h3>
+      </div>
+      <button *ngIf="!isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="chevron-right-outline"></nb-icon>
+      </button>
+    </div>
+
+    <div class="search-section">
+      <div class="search-container">
+        <nb-icon icon="search-outline" class="search-icon"></nb-icon>
+        <input type="text" class="search-input" placeholder="Search category..." [(ngModel)]="searchTerm" (keyup)="applyFilter()" />
+      </div>
+    </div>
+
+    <div class="add-section">
+      <button *ngIf="!isAddingCategory" class="add-btn" (click)="startAddCategory()">
+        <nb-icon icon="plus-outline"></nb-icon><span>Add Category</span>
+      </button>
+      <div *ngIf="isAddingCategory" class="add-inline">
+        <input type="text" class="add-input" [(ngModel)]="newCategoryName" (keyup.enter)="createCategory()" placeholder="New category name..." #categoryInput />
+        <div class="add-actions">
+          <button class="confirm-btn" (click)="createCategory()"><nb-icon icon="checkmark-outline"></nb-icon></button>
+          <button class="cancel-btn" (click)="cancelAddCategory()"><nb-icon icon="close-outline"></nb-icon></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="categories-section">
+      <div class="categories-list">
+        <div *ngIf="filteredCategories.length === 0" class="no-results">
+          <nb-icon icon="folder-outline"></nb-icon><span>No categories found</span>
+        </div>
+        <div *ngFor="let cat of filteredCategories" class="category-item" [class.selected]="selectedCategory?.idCategorieRessource === cat.idCategorieRessource" (click)="selectCategory(cat)">
+          <div *ngIf="editingCategoryId === cat.idCategorieRessource" class="edit-mode" (click)="$event.stopPropagation()">
+            <input type="text" class="edit-input" [(ngModel)]="editingCategoryName" (keyup.enter)="saveEditCategory(cat)" #editCategoryInput />
+            <div class="edit-actions">
+              <button class="confirm-btn" (click)="saveEditCategory(cat)"><nb-icon icon="checkmark-outline"></nb-icon></button>
+              <button class="cancel-btn" (click)="cancelEditCategory()"><nb-icon icon="close-outline"></nb-icon></button>
+            </div>
+          </div>
+          <div *ngIf="editingCategoryId !== cat.idCategorieRessource" class="normal-mode">
+            <div class="category-name">
+              <nb-icon icon="folder-outline" class="folder-icon"></nb-icon>
+              <span>{{ cat.nom }}</span>
+              <span class="item-count">{{ getRessourceCountByCategory(cat.idCategorieRessource) }}</span>
+            </div>
+            <div class="category-actions">
+              <button class="action-btn edit-btn" (click)="startEditCategory(cat, $event)" title="Edit"><nb-icon icon="edit-outline"></nb-icon></button>
+              <button class="action-btn delete-btn" (click)="deleteCategory(cat, $event)" title="Delete"><nb-icon icon="trash-2-outline"></nb-icon></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-area" [class.sidebar-collapsed]="sidebarCollapsed && !isMobile">
+    
+    <div *ngIf="!selectedCategory" class="welcome-message">
+      <div class="welcome-card">
+        <nb-icon icon="hard-drive-outline" class="welcome-icon"></nb-icon>
+        <h2>Welcome to Resource Manager</h2>
+        <p>Select a category from the sidebar to start managing your resources</p>
+        <div class="stats-preview" *ngIf="categories.length > 0">
+          <div class="stat-item"><nb-icon icon="hard-drive-outline"></nb-icon><span>{{ totalRessourcesCount }} Total Resources</span></div>
+          <div class="stat-item"><nb-icon icon="cube-outline"></nb-icon><span>{{ categories.length }} Categories</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="selectedCategory" class="category-content">
+      
+      <div class="content-header">
+        <button class="back-btn" (click)="backToCategories()"><nb-icon icon="arrow-back-outline"></nb-icon><span>Back</span></button>
+        <div class="header-info"><nb-icon icon="folder-outline" class="category-icon"></nb-icon><h2>{{ selectedCategory.nom }}</h2></div>
+      </div>
+
+      <!-- Types Section -->
+      <div class="types-section">
+        <div class="types-header">
+          <h3><nb-icon icon="cube-outline"></nb-icon>Types</h3>
+          <button class="add-type-btn" (click)="startAddType()"><nb-icon icon="plus-outline"></nb-icon><span>Add Type</span></button>
+        </div>
+
+        <div *ngIf="isAddingType" class="add-type-inline">
+          <input type="text" class="add-type-input" [(ngModel)]="newTypeName" (keyup.enter)="createType()" placeholder="New type name..." #typeInput />
+          <div class="add-actions">
+            <button class="confirm-btn" (click)="createType()"><nb-icon icon="checkmark-outline"></nb-icon></button>
+            <button class="cancel-btn" (click)="cancelAddType()"><nb-icon icon="close-outline"></nb-icon></button>
+          </div>
+        </div>
+
+        <div class="types-cards-wrapper">
+          <div class="types-cards">
+            <div class="type-card" [class.selected]="selectedTypeId === null" (click)="selectType(null)">
+              <nb-icon icon="apps-outline" class="type-icon"></nb-icon>
+              <span class="type-name">All Items</span>
+              <span class="type-count">{{ ressources.length }}</span>
+            </div>
+            <div *ngFor="let type of types" class="type-card" [class.selected]="selectedTypeId === type.idTypeRessource" (click)="selectType(type.idTypeRessource)">
+              <div *ngIf="editingTypeId === type.idTypeRessource" class="type-edit-mode" (click)="$event.stopPropagation()">
+                <input type="text" class="edit-type-input" [(ngModel)]="editingTypeName" (keyup.enter)="saveEditType(type)" #editTypeInput />
+                <div class="edit-actions">
+                  <button class="confirm-btn" (click)="saveEditType(type)"><nb-icon icon="checkmark-outline"></nb-icon></button>
+                  <button class="cancel-btn" (click)="cancelEditType()"><nb-icon icon="close-outline"></nb-icon></button>
+                </div>
+              </div>
+              <div *ngIf="editingTypeId !== type.idTypeRessource" class="type-normal-mode">
+                <nb-icon icon="cube-outline" class="type-icon"></nb-icon>
+                <span class="type-name">{{ type.nom }}</span>
+                <span class="type-count">{{ getRessourceCountByType(type.idTypeRessource) }}</span>
+                <div class="type-actions">
+                  <button class="edit-type-btn" (click)="startEditType(type, $event)" title="Edit"><nb-icon icon="edit-outline"></nb-icon></button>
+                  <button class="delete-type-btn" (click)="deleteType(type, $event)" title="Delete"><nb-icon icon="trash-2-outline"></nb-icon></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources Section -->
+      <div class="ressources-section">
+        <div class="ressources-header">
+          <h3><nb-icon icon="hard-drive-outline"></nb-icon>Resources</h3>
+          <div class="header-actions">
+            <!-- Search Container -->
+            <div class="search-container">
+              <nb-icon icon="search-outline" class="search-icon"></nb-icon>
+              <input type="text" class="search-input" placeholder="Search resources..." [(ngModel)]="searchTerm" (keyup)="applyFilter()" />
+            </div>
+            
+            <!-- Advanced Filters Button -->
+            <button class="filter-toggle-btn" (click)="toggleAdvancedFilters()">
+              <nb-icon icon="options-2-outline"></nb-icon>
+              <span>Filters</span>
+              <span class="filter-badge" *ngIf="hasActiveFilters()"></span>
+            </button>
+            
+            <button *ngIf="selectedTypeId !== null" class="add-ressource-btn" (click)="startAddRessource()">
+              <nb-icon icon="plus-outline"></nb-icon><span>Add Resource</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Filters Panel -->
+        <div class="advanced-filters-panel" *ngIf="showAdvancedFilters">
+          <div class="filters-grid">
+            <!-- Unit Filter -->
+            <div class="filter-group">
+              <label>Unit</label>
+              <select [(ngModel)]="filterUnit" (change)="applyFilter()" class="filter-select">
+                <option value="">All Units</option>
+                <option *ngFor="let unit of uniqueUnits" [value]="unit">{{ unit }}</option>
+              </select>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-group">
+              <label>Purchase Date</label>
+              <div class="date-range">
+                <input type="date" [(ngModel)]="filterDateFrom" (change)="applyFilter()" placeholder="From" class="filter-input" />
+                <span>to</span>
+                <input type="date" [(ngModel)]="filterDateTo" (change)="applyFilter()" placeholder="To" class="filter-input" />
+              </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="filter-group">
+              <label>Sort By</label>
+              <select [(ngModel)]="sortField" (change)="applyFilter()" class="filter-select">
+                <option value="titre">Title</option>
+                <option value="quantite">Quantity</option>
+                <option value="cout">Cost</option>
+                <option value="dateAchat">Purchase Date</option>
+                <option value="unite">Unit</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label>Order</label>
+              <div class="order-buttons">
+                <button class="order-btn" [class.active]="sortDirection === 'asc'" (click)="setSortDirection('asc')">
+                  <nb-icon icon="arrow-upward-outline"></nb-icon> Asc
+                </button>
+                <button class="order-btn" [class.active]="sortDirection === 'desc'" (click)="setSortDirection('desc')">
+                  <nb-icon icon="arrow-downward-outline"></nb-icon> Desc
+                </button>
+              </div>
+            </div>
+
+            <!-- Quantity Range Filter -->
+            <div class="filter-group">
+              <label>Quantity Range</label>
+              <div class="range-inputs">
+                <input type="number" [(ngModel)]="filterQuantityMin" (change)="applyFilter()" placeholder="Min" class="filter-input" step="0.01" />
+                <input type="number" [(ngModel)]="filterQuantityMax" (change)="applyFilter()" placeholder="Max" class="filter-input" step="0.01" />
+              </div>
+            </div>
+
+            <!-- Cost Range Filter -->
+            <div class="filter-group">
+              <label>Cost Range (DZD)</label>
+              <div class="range-inputs">
+                <input type="number" [(ngModel)]="filterCostMin" (change)="applyFilter()" placeholder="Min" class="filter-input" step="0.01" />
+                <input type="number" [(ngModel)]="filterCostMax" (change)="applyFilter()" placeholder="Max" class="filter-input" step="0.01" />
+              </div>
+            </div>
+
+            <!-- Clear Filters Button -->
+            <div class="filter-group filter-actions">
+              <button class="clear-filters-btn" (click)="clearAllFilters()">
+                <nb-icon icon="trash-2-outline"></nb-icon> Clear All Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Resource Form -->
+        <div *ngIf="isAddingRessource" class="add-ressource-form" [formGroup]="addRessourceForm">
+          <h4>New Resource</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Title *</label><input formControlName="titre" placeholder="Enter title" class="form-input"></div>
+            <div class="form-field"><label>Description</label><textarea formControlName="description" rows="2" placeholder="Enter description" class="form-input"></textarea></div>
+            <div class="form-field"><label>Quantity *</label><input type="number" formControlName="quantite" class="form-input" step="0.01" min="0"></div>
+            <div class="form-field"><label>Unit *</label><input formControlName="unite" placeholder="kg, litre, piece..." class="form-input"></div>
+            <div class="form-field"><label>Cost (DZD) *</label><input type="number" formControlName="cout" class="form-input" step="0.01" min="0"></div>
+            <div class="form-field"><label>Purchase Date</label><input type="date" formControlName="dateAchat" class="form-input"></div>
+          </div>
+          <div class="form-actions"><button class="cancel-btn" (click)="cancelAddRessource()">Cancel</button><button class="confirm-btn" (click)="createRessource()">Save Resource</button></div>
+        </div>
+
+        <!-- Edit Resource Form -->
+        <div *ngIf="isEditingRessource" class="edit-ressource-form" [formGroup]="editRessourceForm">
+          <h4>Edit Resource</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Title *</label><input formControlName="titre" class="form-input"></div>
+            <div class="form-field"><label>Description</label><textarea formControlName="description" rows="2" class="form-input"></textarea></div>
+            <div class="form-field"><label>Quantity *</label><input type="number" formControlName="quantite" class="form-input" step="0.01" min="0"></div>
+            <div class="form-field"><label>Unit *</label><input formControlName="unite" class="form-input"></div>
+            <div class="form-field"><label>Cost (DZD) *</label><input type="number" formControlName="cout" class="form-input" step="0.01" min="0"></div>
+            <div class="form-field"><label>Purchase Date</label><input type="date" formControlName="dateAchat" class="form-input"></div>
+          </div>
+          <div class="form-actions">
+            <button class="cancel-btn" (click)="cancelEditRessource()">Cancel</button>
+            <button class="confirm-btn" (click)="saveEditRessource(editingRessourceId)">Update Resource</button>
+          </div>
+        </div>
+
+        <!-- Active Filters Tags -->
+        <div class="active-filters" *ngIf="hasActiveFilters()">
+          <span class="filter-tag" *ngIf="filterUnit">
+            Unit: {{ filterUnit }}
+            <button class="remove-filter" (click)="removeFilter('unit')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterDateFrom || filterDateTo">
+            Date: {{ filterDateFrom || 'Any' }} → {{ filterDateTo || 'Any' }}
+            <button class="remove-filter" (click)="removeFilter('date')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterQuantityMin !== null || filterQuantityMax !== null">
+            Quantity: {{ filterQuantityMin ?? '0' }} → {{ filterQuantityMax ?? '∞' }}
+            <button class="remove-filter" (click)="removeFilter('quantity')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterCostMin !== null || filterCostMax !== null">
+            Cost: {{ filterCostMin ?? '0' }} → {{ filterCostMax ?? '∞' }} DZD
+            <button class="remove-filter" (click)="removeFilter('cost')">×</button>
+          </span>
+          <span class="filter-tag">
+            Sort: {{ sortField }} ({{ sortDirection === 'asc' ? '↑' : '↓' }})
+          </span>
+          <button class="clear-all-filters" (click)="clearAllFilters()">Clear All</button>
+        </div>
+
+        <!-- Resources Grid -->
+        <div class="ressources-grid">
+          <div *ngIf="filteredRessources.length === 0 && !isLoading" class="no-results">
+            <nb-icon icon="grid-outline"></nb-icon><h4>No resources found</h4><p>Try adjusting your filters or add new resources</p>
+          </div>
+          <div *ngIf="isLoading" class="loading-spinner"><nb-icon icon="loader-outline" class="spin-animation"></nb-icon><p>Loading...</p></div>
+
+          <div *ngFor="let ressource of paginatedRessources" class="ressource-card" (click)="startEditRessource(ressource, $event)">
+            <div class="ressource-header">
+              <div class="ressource-icon"><nb-icon icon="hard-drive-outline"></nb-icon></div>
+              <div class="ressource-actions">
+                <button class="edit-ressource-btn" (click)="startEditRessource(ressource, $event)" title="Edit"><nb-icon icon="edit-outline"></nb-icon></button>
+                <button class="delete-ressource-btn" (click)="deleteRessource(ressource, $event)" title="Delete"><nb-icon icon="trash-2-outline"></nb-icon></button>
+              </div>
+            </div>
+            <div class="ressource-info">
+              <div class="ressource-title">{{ ressource.titre }}</div>
+              <div class="ressource-stock"><nb-icon icon="layers-outline"></nb-icon>Stock: {{ ressource.quantite }} {{ ressource.unite }}</div>
+              <div class="ressource-cost"><nb-icon icon="credit-card-outline"></nb-icon>Cost: {{ ressource.cout | currency:'DZD' }} / {{ ressource.unite }}</div>
+              <div class="ressource-desc" *ngIf="ressource.description">{{ ressource.description }}</div>
+              <div class="ressource-type" *ngIf="ressource.typeRessourceNom"><nb-icon icon="cube-outline"></nb-icon>{{ ressource.typeRessourceNom }}</div>
+              <div class="ressource-date" *ngIf="ressource.dateAchat"><nb-icon icon="calendar-outline"></nb-icon>{{ ressource.dateAchat | date }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" *ngIf="filteredRessources.length > 0">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+            {{ Math.min(currentPage * pageSize, filteredRessources.length) }} 
+            of {{ filteredRessources.length }} resources
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="goToFirstPage()" [disabled]="currentPage === 1" title="First page">
+              <i class="fas fa-angle-double-left"></i> «
+            </button>
+            
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1" title="Previous">
+              <i class="fas fa-chevron-left"></i> ‹
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages" title="Next">
+              <i class="fas fa-chevron-right"></i> ›
+            </button>
+            
+            <button class="page-btn" (click)="goToLastPage()" [disabled]="currentPage === totalPages" title="Last page">
+              <i class="fas fa-angle-double-right"></i> »
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

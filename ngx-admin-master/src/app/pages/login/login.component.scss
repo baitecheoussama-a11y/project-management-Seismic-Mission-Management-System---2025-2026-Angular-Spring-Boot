@@ -1,0 +1,206 @@
+@import '../../@theme/styles/themes';
+
+@include nb-install-component() {
+  .login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .title {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    letter-spacing: -0.5px;
+  }
+
+  .sub-title {
+    margin: 0 0 2rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    outline: none;
+
+    &:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #ff6b6b;
+    }
+  }
+
+  .error-message {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #ff6b6b;
+  }
+
+  .checkbox-group {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .links {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.85rem;
+
+    a {
+      color: #667eea;
+      text-decoration: none;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: #764ba2;
+        text-decoration: underline;
+      }
+    }
+
+    span {
+      margin: 0 0.5rem;
+      color: #ccc;
+    }
+  }
+
+  .alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+
+    strong {
+      font-weight: 700;
+    }
+
+    &.alert-danger {
+      background: #fff5f5;
+      color: #ff6b6b;
+      border: 1px solid #ffcdcd;
+    }
+
+    &.alert-success {
+      background: #f0fff4;
+      color: #51cf66;
+      border: 1px solid #b2f5cb;
+    }
+  }
+
+  // Animation for router-outlet
+  ::ng-deep router-outlet + * {
+    display: block;
+    animation: fade 0.5s ease-in-out;
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    .login-card {
+      padding: 2rem 1.5rem;
+    }
+
+    .title {
+      font-size: 1.75rem;
+    }
+
+    .form-control {
+      padding: 0.625rem 0.875rem;
+    }
+  }
+}

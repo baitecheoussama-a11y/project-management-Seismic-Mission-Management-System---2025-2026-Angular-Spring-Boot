@@ -1,0 +1,615 @@
+<div class="materiel-container" [@containerAnimation]>
+  
+  <!-- Toggle Sidebar Button -->
+  <button 
+    class="toggle-sidebar-btn" 
+    (click)="toggleSidebar()"
+    [class.collapsed]="sidebarCollapsed && !isMobile"
+  >
+    <nb-icon [icon]="sidebarCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+  </button>
+
+  <!-- Mobile Toggle Button -->
+  <button 
+    *ngIf="isMobile && sidebarCollapsed" 
+    class="mobile-toggle-btn" 
+    (click)="toggleSidebar()"
+    [@mobileButtonAnimation]
+  >
+    <nb-icon icon="menu-outline"></nb-icon>
+  </button>
+
+  <!-- Sidebar -->
+  <div 
+    class="custom-sidebar"
+    [class.collapsed]="sidebarCollapsed && !isMobile"
+    [class.mobile-collapsed]="isMobile && sidebarCollapsed"
+    [@sidebarAnimation]="sidebarCollapsed ? 'collapsed' : 'expanded'"
+  >
+    <div class="sidebar-header">
+      <div class="header-content">
+        <nb-icon icon="hard-drive-outline" class="header-icon" [@iconPulse]></nb-icon>
+        <h3>Categories</h3>
+        <span class="count-badge">{{ categories.length }}</span>
+      </div>
+      <button *ngIf="!isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="chevron-right-outline"></nb-icon>
+      </button>
+    </div>
+
+    <!-- Search Category -->
+    <div class="search-section">
+      <div class="search-container" [@searchAnimation]>
+        <nb-icon icon="search-outline" class="search-icon"></nb-icon>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search category..."
+          [(ngModel)]="searchTerm"
+          (input)="searchSubject.next(searchTerm)"
+        />
+        <button *ngIf="searchTerm" class="clear-search-btn" (click)="searchTerm = ''; searchSubject.next('')">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Category -->
+    <div class="add-section">
+      <button *ngIf="!isAddingCategory" class="add-btn" (click)="startAddCategory()">
+        <nb-icon icon="plus-outline"></nb-icon>
+        <span>Add Category</span>
+      </button>
+      
+      <div *ngIf="isAddingCategory" class="add-inline" [@slideDown]>
+        <input
+          type="text"
+          class="add-input"
+          [(ngModel)]="newCategoryName"
+          (keyup.enter)="createCategory()"
+          placeholder="New category name..."
+          #categoryInput
+        />
+        <div class="add-actions">
+          <button class="confirm-btn" (click)="createCategory()">
+            <nb-icon icon="checkmark-outline"></nb-icon>
+          </button>
+          <button class="cancel-btn" (click)="cancelAddCategory()">
+            <nb-icon icon="close-outline"></nb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories List -->
+    <div class="categories-section">
+      <div class="categories-list">
+        <div *ngIf="filteredCategories.length === 0" class="no-results" [@fadeIn]>
+          <nb-icon icon="folder-outline"></nb-icon>
+          <span>No categories found</span>
+        </div>
+
+        <div
+          *ngFor="let cat of filteredCategories; let i = index"
+          class="category-item"
+          [class.selected]="selectedCategory?.idCategorie === cat.idCategorie"
+          (click)="selectCategory(cat)"
+          [@categoryAnimation]
+        >
+          <div *ngIf="editingCategoryId === cat.idCategorie" class="edit-mode" (click)="$event.stopPropagation()" [@slideDown]>
+            <input
+              type="text"
+              class="edit-input"
+              [(ngModel)]="editingCategoryName"
+              (keyup.enter)="saveEditCategory(cat)"
+              #editCategoryInput
+            />
+            <div class="edit-actions">
+              <button class="confirm-btn" (click)="saveEditCategory(cat)">
+                <nb-icon icon="checkmark-outline"></nb-icon>
+              </button>
+              <button class="cancel-btn" (click)="cancelEditCategory()">
+                <nb-icon icon="close-outline"></nb-icon>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="editingCategoryId !== cat.idCategorie" class="normal-mode" [@fadeIn]>
+            <div class="category-name">
+              <nb-icon icon="folder-outline" class="folder-icon"></nb-icon>
+              <span>{{ cat.nom }}</span>
+              <span class="item-count">{{ getMaterielCountByCategory(cat.idCategorie) }}</span>
+            </div>
+            
+            <div class="category-actions">
+              <button class="action-btn edit-btn" (click)="startEditCategory(cat, $event)" title="Edit">
+                <nb-icon icon="edit-outline"></nb-icon>
+              </button>
+              <button class="action-btn delete-btn" (click)="deleteCategory(cat, $event)" title="Delete">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-area" [class.sidebar-collapsed]="sidebarCollapsed && !isMobile" [@contentAnimation]>
+    
+    <!-- Welcome Message -->
+    <div *ngIf="!selectedCategory" class="welcome-message" [@fadeInUp]>
+      <div class="welcome-card">
+        <nb-icon icon="folder-outline" class="welcome-icon" [@iconRotate]></nb-icon>
+        <h2>Welcome to Materiel Manager</h2>
+        <p>Select a category from the sidebar to start managing your equipment</p>
+        <div class="stats-preview" *ngIf="categories.length > 0">
+          <div class="stat-item">
+            <nb-icon icon="hard-drive-outline"></nb-icon>
+            <span>{{ totalMaterielsCount }} Total Items</span>
+          </div>
+          <div class="stat-item">
+            <nb-icon icon="cube-outline"></nb-icon>
+            <span>{{ categories.length }} Categories</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Content -->
+    <div *ngIf="selectedCategory" class="category-content" [@slideInRight]>
+      
+      <div class="content-header">
+        <button class="back-btn" (click)="backToCategories()">
+          <nb-icon icon="arrow-back-outline"></nb-icon>
+          <span>Back</span>
+        </button>
+        <div class="header-info">
+          <nb-icon icon="folder-outline" class="category-icon"></nb-icon>
+          <h2>{{ selectedCategory.nom }}</h2>
+        </div>
+      </div>
+
+      <!-- Types Section -->
+      <div class="types-section" [@fadeInUp]>
+        <div class="types-header">
+          <h3>
+            <nb-icon icon="cube-outline"></nb-icon>
+            Types
+          </h3>
+          <button class="add-type-btn" (click)="startAddType()">
+            <nb-icon icon="plus-outline"></nb-icon>
+            <span>Add Type</span>
+          </button>
+        </div>
+
+        <div *ngIf="isAddingType" class="add-type-inline" [@slideDown]>
+          <input
+            type="text"
+            class="add-type-input"
+            [(ngModel)]="newTypeName"
+            (keyup.enter)="createType()"
+            placeholder="New type name..."
+            #typeInput
+          />
+          <div class="add-actions">
+            <button class="confirm-btn" (click)="createType()">
+              <nb-icon icon="checkmark-outline"></nb-icon>
+            </button>
+            <button class="cancel-btn" (click)="cancelAddType()">
+              <nb-icon icon="close-outline"></nb-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="types-cards-wrapper" [@listAnimation]>
+          <div class="types-cards">
+            <!-- All Card -->
+            <div 
+              class="type-card"
+              [class.selected]="selectedTypeId === null"
+              (click)="selectType(null)"
+            >
+              <nb-icon icon="apps-outline" class="type-icon"></nb-icon>
+              <span class="type-name">All Items</span>
+              <span class="type-count">{{ materiels.length }}</span>
+            </div>
+
+            <!-- Type Cards -->
+            <div
+              *ngFor="let type of types; let i = index"
+              class="type-card"
+              [class.selected]="selectedTypeId === type.idTypeMateriel"
+              (click)="selectType(type.idTypeMateriel)"
+            >
+              <div *ngIf="editingTypeId === type.idTypeMateriel" class="type-edit-mode" (click)="$event.stopPropagation()" [@slideDown]>
+                <input
+                  type="text"
+                  class="edit-type-input"
+                  [(ngModel)]="editingTypeName"
+                  (keyup.enter)="saveEditType(type)"
+                  #editTypeInput
+                />
+                <div class="edit-actions">
+                  <button class="confirm-btn" (click)="saveEditType(type)">
+                    <nb-icon icon="checkmark-outline"></nb-icon>
+                  </button>
+                  <button class="cancel-btn" (click)="cancelEditType()">
+                    <nb-icon icon="close-outline"></nb-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="editingTypeId !== type.idTypeMateriel" class="type-normal-mode">
+                <nb-icon icon="cube-outline" class="type-icon"></nb-icon>
+                <span class="type-name">{{ type.libelle }}</span>
+                <span class="type-count">{{ getMaterielCountByType(type.idTypeMateriel) }}</span>
+                <div class="type-actions">
+                  <button class="edit-type-btn" (click)="startEditType(type, $event)" title="Edit">
+                    <nb-icon icon="edit-outline"></nb-icon>
+                  </button>
+                  <button class="delete-type-btn" (click)="deleteType(type, $event)" title="Delete">
+                    <nb-icon icon="trash-2-outline"></nb-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Materiels Section -->
+      <div class="materiels-section" [@fadeInUp]>
+        <div class="materiels-header">
+          <h3>
+            <nb-icon icon="hard-drive-outline"></nb-icon>
+            Equipment
+          </h3>
+          <div class="header-actions">
+            <!-- Search Equipment (always visible) -->
+            <div class="search-container" [@searchAnimation]>
+              <nb-icon icon="search-outline" class="search-icon"></nb-icon>
+              <input
+                type="text"
+                class="search-input"
+                [placeholder]="showSelectionMode ? 'Search equipment to assign...' : 'Search equipment...'"
+                [(ngModel)]="showSelectionMode ? equipmentSearchTerm : searchTerm"
+                (keyup)="showSelectionMode ? null : applyFilter()"
+              />
+            </div>
+
+            <!-- Advanced Filters Button -->
+            <button class="filter-toggle-btn" (click)="toggleAdvancedFilters()" *ngIf="!showSelectionMode">
+              <nb-icon icon="options-2-outline"></nb-icon>
+              <span>Filters</span>
+              <span class="filter-badge" *ngIf="hasActiveFilters()"></span>
+            </button>
+
+            <!-- Assign to Activity Button -->
+            <button 
+              *ngIf="selectedCategory !== null" 
+              class="assign-mission-btn" 
+              (click)="toggleSelectionMode()"
+              [class.active]="showSelectionMode">
+              <nb-icon icon="grid-outline"></nb-icon>
+              <span>{{ showSelectionMode ? 'Cancel Selection' : 'Assign to Activity' }}</span>
+            </button>
+            
+            <!-- Confirm Assignment Button -->
+            <button *ngIf="showSelectionMode && getSelectedCount() > 0" 
+                    class="confirm-assign-btn" 
+                    (click)="openAssignActivityModal()">
+              <nb-icon icon="checkmark-outline"></nb-icon>
+              <span>Assign {{ getSelectedCount() }} Item(s)</span>
+            </button>
+
+            <!-- Select All Button (when in selection mode) -->
+            <button *ngIf="showSelectionMode && filteredMateriels.length > 0" 
+                    class="select-all-btn" 
+                    (click)="selectAllVisible()">
+              <nb-icon icon="select-all-outline"></nb-icon>
+              <span>{{ selectedMaterielsForAssignment.size === filteredMateriels.length ? 'Deselect All' : 'Select All' }}</span>
+            </button>
+
+            <!-- Add Equipment Button (only when not in selection mode) -->
+            <button *ngIf="selectedTypeId !== null && !showSelectionMode" class="add-materiel-btn" (click)="startAddMateriel()">
+              <nb-icon icon="plus-outline"></nb-icon>
+              <span>Add Equipment</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Filters Panel -->
+        <div class="advanced-filters-panel" *ngIf="showAdvancedFilters && !showSelectionMode">
+          <div class="filters-grid">
+            <!-- Status Filter -->
+            <div class="filter-group">
+              <label>Status</label>
+              <select [(ngModel)]="filterStatus" (change)="applyFilter()" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="EN_BON_ETAT">✅ Good Condition</option>
+                <option value="EN_PANNE">⚠️ Broken</option>
+                <option value="EN_REPARATION_INTERNE">🔧 Internal Repair</option>
+                <option value="EN_REPARATION_EXTERNE">🔧 External Repair</option>
+              </select>
+            </div>
+
+            <!-- Brand Filter -->
+            <div class="filter-group">
+              <label>Brand</label>
+              <select [(ngModel)]="filterBrand" (change)="applyFilter()" class="filter-select">
+                <option value="">All Brands</option>
+                <option *ngFor="let brand of uniqueBrands" [value]="brand">{{ brand }}</option>
+              </select>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-group">
+              <label>Purchase Date</label>
+              <div class="date-range">
+                <input type="date" [(ngModel)]="filterDateFrom" (change)="applyFilter()" placeholder="From" class="filter-input" />
+                <span>to</span>
+                <input type="date" [(ngModel)]="filterDateTo" (change)="applyFilter()" placeholder="To" class="filter-input" />
+              </div>
+            </div>
+
+            <!-- Price Range Filter -->
+            <div class="filter-group">
+              <label>Price Range (DZD)</label>
+              <div class="range-inputs">
+                <input type="number" [(ngModel)]="filterPriceMin" (change)="applyFilter()" placeholder="Min" class="filter-input" step="0.01" />
+                <input type="number" [(ngModel)]="filterPriceMax" (change)="applyFilter()" placeholder="Max" class="filter-input" step="0.01" />
+              </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="filter-group">
+              <label>Sort By</label>
+              <select [(ngModel)]="sortField" (change)="applyFilter()" class="filter-select">
+                <option value="codeMateriel">Code</option>
+                <option value="marque">Brand</option>
+                <option value="modele">Model</option>
+                <option value="prix">Price</option>
+                <option value="dateAchat">Purchase Date</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label>Order</label>
+              <div class="order-buttons">
+                <button class="order-btn" [class.active]="sortDirection === 'asc'" (click)="setSortDirection('asc')">
+                  <nb-icon icon="arrow-upward-outline"></nb-icon> Asc
+                </button>
+                <button class="order-btn" [class.active]="sortDirection === 'desc'" (click)="setSortDirection('desc')">
+                  <nb-icon icon="arrow-downward-outline"></nb-icon> Desc
+                </button>
+              </div>
+            </div>
+
+            <!-- Availability Status Filter -->
+            <div class="filter-group">
+              <label>Availability Status</label>
+              <select [(ngModel)]="filterAvailability" (change)="applyFilter()" class="filter-select">
+                <option value="">All Equipment</option>
+                <option value="available">✅ Available (Not in use)</option>
+                <option value="assigned">📋 Currently Assigned</option>
+              </select>
+            </div>
+
+            <!-- Activity Filter (conditional) -->
+            <div class="filter-group" *ngIf="filterAvailability === 'assigned'">
+              <label>Assigned to Activity</label>
+              <select [(ngModel)]="filterActivityCode" (change)="applyFilter()" class="filter-select">
+                <option value="">All Activities</option>
+                <option *ngFor="let activityCode of uniqueActivityCodes" [value]="activityCode">
+                  {{ activityCode }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Clear Filters Button -->
+            <div class="filter-group filter-actions">
+              <button class="clear-filters-btn" (click)="clearAllFilters()">
+                <nb-icon icon="trash-2-outline"></nb-icon> Clear All Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Materiel Form -->
+        <div *ngIf="isAddingMateriel" class="add-materiel-form" [@slideDown]>
+          <h4>New Equipment</h4>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Code *</label>
+              <input [(ngModel)]="newMateriel.codeMateriel" placeholder="Enter code" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Brand *</label>
+              <input [(ngModel)]="newMateriel.marque" placeholder="Enter brand" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Model</label>
+              <input [(ngModel)]="newMateriel.modele" placeholder="Enter model" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Designation</label>
+              <input [(ngModel)]="newMateriel.designation" placeholder="Enter designation" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Purchase Date</label>
+              <input [(ngModel)]="newMateriel.dateAchat" type="date" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Status</label>
+              <select [(ngModel)]="newMateriel.status" class="form-input">
+                <option value="EN_BON_ETAT">✅ Good Condition</option>
+                <option value="EN_PANNE">⚠️ Broken</option>
+                <option value="EN_REPARATION_INTERNE">🔧 Internal Repair</option>
+                <option value="EN_REPARATION_EXTERNE">🔧 External Repair</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Price (DZD)</label>
+              <input type="number" [(ngModel)]="newMateriel.prix" placeholder="Enter price" class="form-input" step="0.01">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="cancel-btn" (click)="cancelAddMateriel()">Cancel</button>
+            <button class="confirm-btn" (click)="createMateriel()">Save Equipment</button>
+          </div>
+        </div>
+
+        <!-- Active Filters Tags -->
+        <div class="active-filters" *ngIf="hasActiveFilters() && !showSelectionMode">
+          <span class="filter-tag" *ngIf="filterAvailability === 'assigned' && filterActivityCode">
+            Activity: {{ filterActivityCode }}
+            <button class="remove-filter" (click)="removeFilter('activity')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterStatus">
+            Status: {{ getStatusText(filterStatus) }}
+            <button class="remove-filter" (click)="removeFilter('status')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterBrand">
+            Brand: {{ filterBrand }}
+            <button class="remove-filter" (click)="removeFilter('brand')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterDateFrom || filterDateTo">
+            Date: {{ filterDateFrom || 'Any' }} → {{ filterDateTo || 'Any' }}
+            <button class="remove-filter" (click)="removeFilter('date')">×</button>
+          </span>
+          <span class="filter-tag" *ngIf="filterPriceMin !== null || filterPriceMax !== null">
+            Price: {{ filterPriceMin ?? '0' }} → {{ filterPriceMax ?? '∞' }} DZD
+            <button class="remove-filter" (click)="removeFilter('price')">×</button>
+          </span>
+          <span class="filter-tag">
+            Sort: {{ sortField }} ({{ sortDirection === 'asc' ? '↑' : '↓' }})
+          </span>
+          <button class="clear-all-filters" (click)="clearAllFilters()">Clear All</button>
+        </div>
+
+        <!-- Materiels Grid -->
+        <div class="materiels-grid" [@gridAnimation]>
+          <div *ngIf="(showSelectionMode ? filteredEquipmentsForAssignment.length : filteredMateriels.length) === 0 && !isLoading" class="no-results" [@fadeIn]>
+            <nb-icon icon="grid-outline"></nb-icon>
+            <h4>No equipment found</h4>
+            <p>Try adjusting your filters or add new equipment</p>
+          </div>
+
+          <div *ngIf="isLoading" class="loading-spinner">
+            <nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
+            <p>Loading...</p>
+          </div>
+
+          <div
+            *ngFor="let materiel of paginatedMateriels; let i = index"
+            class="materiel-card"
+            [class]="'status-' + getStatusClass(materiel.status)"
+            [class.selection-mode]="showSelectionMode"
+            [class.selected]="isMaterielSelected(materiel.idMateriel)"
+            (click)="openMaterielDetails(materiel, $event)"
+            [@cardAnimation]
+          >
+            <!-- Selection Checkbox -->
+            <div *ngIf="showSelectionMode" class="selection-checkbox" (click)="$event.stopPropagation()">
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  [checked]="isMaterielSelected(materiel.idMateriel)" 
+                  (change)="toggleMaterielSelection(materiel.idMateriel, $event)"
+                >
+                <span class="checkmark"></span>
+              </label>
+            </div>
+
+            <div class="materiel-header">
+              <div class="status-badge" [style.background]="getStatusColor(materiel.status)">
+                <nb-icon [icon]="getStatusIcon(materiel.status)" class="status-icon"></nb-icon>
+                {{ getStatusText(materiel.status) }}
+              </div>
+              <div class="materiel-actions">
+                <button class="edit-materiel-btn" (click)="editMateriel(materiel); $event.stopPropagation()" title="Edit">
+                  <nb-icon icon="edit-outline"></nb-icon>
+                </button>
+                <button class="delete-materiel-btn" (click)="deleteMateriel(materiel, $event); $event.stopPropagation()" title="Delete">
+                  <nb-icon icon="trash-2-outline"></nb-icon>
+                </button>
+              </div>
+            </div>
+            
+            <div class="materiel-icon">
+              <nb-icon icon="hard-drive-outline" [@iconPulse]></nb-icon>
+            </div>
+            
+            <div class="materiel-info">
+              <div class="materiel-code">{{ materiel.codeMateriel }}</div>
+              <div class="materiel-name">{{ materiel.marque }} {{ materiel.modele }}</div>
+              
+              <!-- Availability Badge -->
+              <div class="availability-badge" [style.background]="getAvailabilityStatus(materiel).color">
+                <nb-icon [icon]="getAvailabilityStatus(materiel).icon" class="availability-icon"></nb-icon>
+                <span>{{ getAvailabilityStatus(materiel).text }}</span>
+              </div>
+              
+              <div class="materiel-price" *ngIf="materiel.prix">
+                <nb-icon icon="credit-card-outline"></nb-icon>
+                Price: {{ materiel.prix | currency:'DZD' }}
+              </div>
+              <div class="materiel-detail" *ngIf="materiel.designation">
+                <nb-icon icon="info-outline"></nb-icon>
+                {{ materiel.designation }}
+              </div>
+              <div class="materiel-detail" *ngIf="materiel.dateAchat">
+                <nb-icon icon="calendar-outline"></nb-icon>
+                Purchased: {{ materiel.dateAchat | date:'MMM d, y' }}
+              </div>
+              <div class="materiel-type" *ngIf="materiel.typeMateriel?.libelle">
+                <nb-icon icon="cube-outline"></nb-icon>
+                {{ materiel.typeMateriel?.libelle }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination Section -->
+        <div class="pagination-container" *ngIf="(showSelectionMode ? filteredEquipmentsForAssignment.length : filteredMateriels.length) > 0">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+            {{ Math.min(currentPage * pageSize, (showSelectionMode ? filteredEquipmentsForAssignment.length : filteredMateriels.length)) }} 
+            of {{ showSelectionMode ? filteredEquipmentsForAssignment.length : filteredMateriels.length }} items
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn first-page" (click)="goToFirstPage()" [disabled]="currentPage === 1" title="First page">
+              <i class="fas fa-angle-double-left"></i> «
+            </button>
+            
+            <button class="page-btn prev-page" (click)="previousPage()" [disabled]="currentPage === 1" title="Previous">
+              <i class="fas fa-chevron-left"></i> ‹
+            </button>
+            
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            
+            <button class="page-btn next-page" (click)="nextPage()" [disabled]="currentPage === totalPages" title="Next">
+              <i class="fas fa-chevron-right"></i> ›
+            </button>
+            
+            <button class="page-btn last-page" (click)="goToLastPage()" [disabled]="currentPage === totalPages" title="Last page">
+              <i class="fas fa-angle-double-right"></i> »
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+

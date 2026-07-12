@@ -1,0 +1,111 @@
+<nb-card class="assign-mission-modal">
+  <nb-card-header>
+    <div class="modal-header">
+      <div class="header-info">
+        <nb-icon icon="briefcase-outline" class="header-icon"></nb-icon>
+        <h4>Assign Equipment to Mission</h4>
+      </div>
+      <button nbButton ghost status="basic" size="small" (click)="close()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div class="selected-materiels">
+      <h5>
+        <nb-icon icon="hard-drive-outline"></nb-icon>
+        Selected Equipment ({{ selectedMateriels.length }})
+      </h5>
+      <div class="materiel-chips">
+        <div *ngFor="let materiel of selectedMateriels" class="chip" 
+             [class.not-available]="!isMaterielAvailable(materiel.idMateriel)">
+          <nb-icon icon="cube-outline"></nb-icon>
+          <span>{{ materiel.codeMateriel }} - {{ materiel.marque }} {{ materiel.modele }}</span>
+          <span class="availability-chip" [class.available]="isMaterielAvailable(materiel.idMateriel)" 
+                [class.not-available]="!isMaterielAvailable(materiel.idMateriel)">
+            <nb-icon *ngIf="isMaterielAvailable(materiel.idMateriel)" icon="checkmark-circle-outline" status="success"></nb-icon>
+            <nb-icon *ngIf="!isMaterielAvailable(materiel.idMateriel)" icon="close-circle-outline" status="danger"></nb-icon>
+            {{ getAvailabilityInfoForMateriel(materiel.idMateriel) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="assignForm" class="assign-form">
+      <div class="form-field">
+        <label>
+          <nb-icon icon="briefcase-outline"></nb-icon>
+          Select Mission *
+        </label>
+        <select formControlName="missionId" class="form-input">
+          <option value="">-- Choose a mission --</option>
+          <option *ngFor="let mission of missions" [value]="mission.id">
+            {{ mission.codeMission }} - {{ mission.description || mission.methodologie }}
+          </option>
+        </select>
+        <small *ngIf="assignForm.get('missionId')?.invalid && assignForm.get('missionId')?.touched" class="error-message">
+          Please select a mission
+        </small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>
+            <nb-icon icon="calendar-outline"></nb-icon>
+            Start Date *
+          </label>
+          <input type="date" formControlName="dateDebut" class="form-input" [class.error]="assignForm.get('dateDebut')?.invalid && assignForm.get('dateDebut')?.touched">
+          <small *ngIf="assignForm.get('dateDebut')?.invalid && assignForm.get('dateDebut')?.touched" class="error-message">
+            Start date is required
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>
+            <nb-icon icon="calendar-outline"></nb-icon>
+            End Date (Optional)
+          </label>
+          <input type="date" formControlName="dateFin" class="form-input">
+        </div>
+      </div>
+
+      <!-- Availability Status -->
+      <div class="availability-status" *ngIf="assignForm.get('dateDebut')?.value">
+        <div class="availability-info-danger" *ngIf="!areAllMaterielsAvailable()">
+          <nb-icon icon="alert-circle-outline" status="danger"></nb-icon>
+          <span class="error-message">Some equipment are not available for the selected period</span>
+        </div>
+        <div class="availability-info-success" *ngIf="areAllMaterielsAvailable()">
+          <nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
+          <span>All selected equipment are available for this period</span>
+        </div>
+      </div>
+
+      <div class="info-box" *ngIf="assignForm.get('missionId')?.value">
+        <nb-icon icon="info-outline"></nb-icon>
+        <div class="info-content">
+          <strong>Selected Mission:</strong>
+          <p>{{ getSelectedMissionName() }}</p>
+        </div>
+      </div>
+    </form>
+  </nb-card-body>
+
+  <nb-card-footer>
+    <div class="modal-footer">
+      <button nbButton status="basic" (click)="close()">
+        <nb-icon icon="close-outline"></nb-icon>
+        Cancel
+      </button>
+      <button 
+        nbButton status="primary" 
+        (click)="submit()" 
+        [disabled]="isLoading || assignForm.invalid || !areAllMaterielsAvailable()" 
+        [nbSpinner]="isLoading">
+        <nb-icon icon="checkmark-outline"></nb-icon>
+        Assign {{ selectedMateriels.length }} Equipment(s)
+      </button>
+    </div>
+  </nb-card-footer>
+</nb-card>

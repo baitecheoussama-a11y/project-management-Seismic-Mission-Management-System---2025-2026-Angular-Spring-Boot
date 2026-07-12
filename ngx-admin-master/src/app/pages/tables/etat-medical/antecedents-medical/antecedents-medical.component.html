@@ -1,0 +1,36 @@
+<nb-card class="antecedents-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="file-text-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Medical History Records</h4>
+          <span class="card-subtitle">
+            <nb-icon icon="person-outline" class="subtitle-icon"></nb-icon>
+            Employee: {{ employeName || 'Loading...' }}
+          </span>
+        </div>
+      </div>
+      
+      <button nbButton status="primary" size="medium" (click)="goBack()" class="back-button">
+        <nb-icon icon="arrow-back-outline"></nb-icon>
+        <span>Back to Medical Records</span>
+      </button>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <div class="info-message">
+      <nb-icon icon="info-outline"></nb-icon>
+      <span>Medical history includes past conditions, surgeries, chronic diseases, and other health information.</span>
+    </div>
+    
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

@@ -1,0 +1,136 @@
+<div class="left-header">
+  <div class="logo-container">
+    <a (click)="toggleSidebar()" href="#" class="sidebar-toggle">
+      <nb-icon icon="menu-2-outline"></nb-icon>
+    </a>
+    <a class="logo" href="#" (click)="navigateHome()">
+      GeoTrack <span>PMS</span>
+    </a>
+  </div>
+  <nb-select [selected]="currentTheme" (selectedChange)="changeTheme($event)" status="primary">
+    <nb-option *ngFor="let theme of themes" [value]="theme.value">{{ theme.name }}</nb-option>
+  </nb-select>
+</div>
+
+<div class="right-header">
+  <nb-actions size="small">
+    <nb-action class="control-item">
+      <nb-search type="rotate-layout"></nb-search>
+    </nb-action>
+    <nb-action class="control-item" icon="email-outline"></nb-action>
+    
+    <!-- Notification Bell -->
+    <nb-action class="control-item notification-action" (click)="toggleNotifications($event)">
+      <div class="notification-bell-wrapper">
+        <nb-icon icon="bell-outline" class="bell-icon"></nb-icon>
+        <!-- Facebook-style badge with count -->
+        <div class="notification-badge" *ngIf="unreadCount > 0">
+          <span class="badge-count">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+          <span class="badge-dot"></span>
+        </div>
+        <!-- Small dot when there are unread notifications (like Facebook) -->
+        <span class="notification-dot" *ngIf="unreadCount > 0 && unreadCount <= 3"></span>
+      </div>
+    </nb-action>
+    
+    <nb-action class="user-action" *ngIf="user">
+      <nb-user 
+        [nbContextMenu]="userMenu"
+        [onlyPicture]="userPictureOnly"
+        [name]="userName"
+        [title]="userRoles"
+        picture="https://i.pravatar.cc/150?img=3">
+      </nb-user>
+    </nb-action>
+  </nb-actions>
+</div>
+
+<!-- Notification Dropdown -->
+<div class="notification-dropdown" *ngIf="showNotifications" (click)="$event.stopPropagation()">
+  <div class="notification-header">
+    <div class="header-left">
+      <nb-icon icon="bell-outline"></nb-icon>
+      <h4>Notifications</h4>
+      <span class="unread-count" *ngIf="unreadCount > 0">{{ unreadCount }} new</span>
+    </div>
+    <div class="header-right">
+      <!-- Filter Toggle Button -->
+      <button class="filter-toggle-btn" (click)="showFilters = !showFilters" [class.active]="showFilters">
+        <nb-icon icon="funnel-outline"></nb-icon>
+        <span>Filter</span>
+        <span class="filter-active-dot" *ngIf="selectedFilter !== 'all'"></span>
+      </button>
+      <button *ngIf="unreadCount > 0" class="mark-all-btn" (click)="markAllAsRead($event)">
+        <nb-icon icon="checkmark-outline"></nb-icon>
+        Mark all read
+      </button>
+      <button *ngIf="hasReadNotifications()" class="delete-read-btn" (click)="deleteAllRead($event)">
+        <nb-icon icon="trash-2-outline"></nb-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Panel (Toggleable) -->
+  <div class="notification-filters" *ngIf="showFilters">
+    <div class="filter-group">
+      <button class="filter-tab" [class.active]="selectedFilter === 'all'" (click)="setFilter('all')">
+        <nb-icon icon="apps-outline"></nb-icon>
+        All
+        <span class="filter-count">{{ notifications.length }}</span>
+      </button>
+      <button class="filter-tab" [class.active]="selectedFilter === 'unread'" (click)="setFilter('unread')">
+        <nb-icon icon="email-outline"></nb-icon>
+        Unread
+        <span class="filter-count unread-filter-count">{{ unreadCount }}</span>
+      </button>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <button *ngFor="let type of notificationTypes" 
+              class="filter-tab" 
+              [class.active]="selectedFilter === type"
+              (click)="setFilter(type)">
+        <nb-icon [icon]="getNotificationIcon(type)"></nb-icon>
+        {{ getNotificationTypeLabel(type) }}
+        <span class="filter-count">{{ getFilteredCount(type) }}</span>
+      </button>
+    </div>
+    <button class="clear-filter-btn" *ngIf="selectedFilter !== 'all'" (click)="setFilter('all')">
+      <nb-icon icon="close-outline"></nb-icon>
+      Clear filter
+    </button>
+  </div>
+
+  <!-- Notification List -->
+  <div class="notification-list" *ngIf="filteredNotifications.length > 0">
+    <div *ngFor="let notification of filteredNotifications" 
+         class="notification-item" 
+         [class.unread]="!notification.read"
+         (click)="navigateToNotification(notification, $event)">
+      <div class="notification-icon" [style.background-color]="getNotificationColor(notification.type)">
+        <nb-icon [icon]="getNotificationIcon(notification.type)"></nb-icon>
+      </div>
+      <div class="notification-content">
+        <div class="notification-title">{{ notification.title }}</div>
+        <div class="notification-message">{{ notification.message }}</div>
+        <div class="notification-time">
+          <nb-icon icon="clock-outline"></nb-icon>
+          {{ formatDate(notification.createdAt) }}
+        </div>
+      </div>
+      <button class="delete-notification-btn" (click)="deleteNotification(notification.id, $event)" title="Delete">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- No Notifications -->
+  <div *ngIf="filteredNotifications.length === 0" class="no-notifications">
+    <nb-icon icon="bell-off-outline" class="no-icon"></nb-icon>
+    <p>No notifications</p>
+    <span>{{ selectedFilter === 'all' ? "You're all caught up!" : "No " + getNotificationTypeLabel(selectedFilter) + " notifications" }}</span>
+  </div>
+</div>
+
+<!-- Click outside to close -->
+<div class="notification-overlay" *ngIf="showNotifications" (click)="closeNotifications()"></div>

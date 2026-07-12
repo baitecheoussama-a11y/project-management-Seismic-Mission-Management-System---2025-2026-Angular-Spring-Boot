@@ -1,0 +1,555 @@
+<nb-card class="materiel-detail-modal" [nbSpinner]="isLoading" nbSpinnerStatus="primary">
+  <nb-card-header>
+    <div class="modal-header">
+      <div class="header-info">
+        <div class="icon-wrapper">
+          <nb-icon icon="hard-drive-outline" class="header-icon"></nb-icon>
+        </div>
+        <div>
+          <h4>{{ materiel?.marque }} {{ materiel?.modele }}</h4>
+          <p class="code">{{ materiel?.codeMateriel }}</p>
+        </div>
+      </div>
+      <button nbButton ghost status="basic" size="small" class="close-btn" (click)="close()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div *ngIf="materiel" class="detail-content">
+      
+      <!-- Status Badge -->
+      <div class="status-section">
+        <div class="status-badge" [style.background]="getStatusColor(materiel.status)">
+          <nb-icon [icon]="getStatusIcon(materiel.status)" class="status-icon"></nb-icon>
+          <span>{{ getStatusText(materiel.status) }}</span>
+        </div>
+      </div>
+
+      <!-- Equipment Health Status Section -->
+      <div class="health-status-section">
+        <div class="health-header">
+          <div class="header-left">
+            <nb-icon icon="activity-outline" class="section-icon"></nb-icon>
+            <h5>Equipment Health Status</h5>
+          </div>
+        </div>
+        <div class="health-stats">
+          <div class="health-stat good">
+            <div class="stat-icon">
+              <nb-icon icon="checkmark-circle-outline"></nb-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Good Condition</span>
+              <span class="stat-value">{{ getAvailableStockQuantity() > 0 ? 'Yes' : 'No' }}</span>
+            </div>
+          </div>
+          <div class="health-stat broken">
+            <div class="stat-icon">
+              <nb-icon icon="alert-circle-outline"></nb-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Broken</span>
+              <span class="stat-value">{{ getBrokenStockQuantity() > 0 ? 'Yes' : 'No' }}</span>
+            </div>
+          </div>
+          <div class="health-stat repair">
+            <div class="stat-icon">
+              <nb-icon icon="settings-outline"></nb-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">In Repair</span>
+              <span class="stat-value">{{ getInRepairStockQuantity() > 0 ? 'Yes' : 'No' }}</span>
+            </div>
+          </div>
+          <div class="health-stat total">
+            <div class="stat-icon">
+              <nb-icon icon="layers-outline"></nb-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Status</span>
+              <span class="stat-value">{{ getStatusText(materiel.status) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== BREAKDOWN SECTION ==================== -->
+      <div class="info-section">
+        <div class="section-header">
+          <div class="header-left">
+            <nb-icon icon="alert-triangle-outline" class="section-icon"></nb-icon>
+            <h5>Declare Breakdown</h5>
+          </div>
+          <button *ngIf="!showBreakdownForm && getAvailableStockQuantity() > 0" 
+                  class="action-btn primary-btn" (click)="showBreakdownForm = true">
+            <nb-icon icon="plus-outline"></nb-icon>
+            <span>New Breakdown</span>
+          </button>
+        </div>
+        
+        <div *ngIf="showBreakdownForm" class="breakdown-form" [formGroup]="breakdownForm">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Failure Date *</label>
+              <input type="date" formControlName="datePanne" class="form-input">
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Problem Description</label>
+            <textarea formControlName="detailProbleme" rows="2" class="form-input" placeholder="Describe the issue..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="cancel-btn" (click)="showBreakdownForm = false">Cancel</button>
+            <button class="confirm-btn" (click)="declareBreakdown()">Declare Breakdown</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PENDING BREAKDOWNS ==================== -->
+      <div class="info-section" *ngIf="pendingBreakdowns.length > 0">
+        <div class="section-header">
+          <div class="header-left">
+            <nb-icon icon="clock-outline" class="section-icon"></nb-icon>
+            <h5>Pending Breakdowns <span class="badge">{{ pendingBreakdowns.length }}</span></h5>
+          </div>
+        </div>
+        
+        <div class="pending-list">
+          <div *ngFor="let repair of pendingBreakdowns" class="pending-card" [class.editing]="editingPendingId === repair.idReparation">
+            
+            <!-- Edit Mode -->
+            <div *ngIf="editingPendingId === repair.idReparation" class="edit-mode" [formGroup]="editingPendingForm">
+              <div class="edit-form-row">
+                <div class="form-field">
+                  <label>Failure Date</label>
+                  <input type="date" formControlName="datePanne" class="form-input">
+                </div>
+              </div>
+              <div class="form-field">
+                <label>Problem Description</label>
+                <textarea formControlName="detailProbleme" rows="2" class="form-input"></textarea>
+              </div>
+              <div class="edit-actions">
+                <button class="save-btn" (click)="saveEditPending(repair)">
+                  <nb-icon icon="checkmark-outline"></nb-icon> Save
+                </button>
+                <button class="cancel-btn" (click)="cancelEditPending()">
+                  <nb-icon icon="close-outline"></nb-icon> Cancel
+                </button>
+              </div>
+            </div>
+            
+            <!-- Normal Mode -->
+            <div *ngIf="editingPendingId !== repair.idReparation" class="pending-info">
+              <div class="pending-details">
+                <nb-icon icon="alert-circle-outline" class="pending-icon"></nb-icon>
+                <div>
+                  <strong>1 unit broken</strong>
+                  <small>on {{ repair.datePanne | date }}</small>
+                  <p *ngIf="repair.detailProbleme">{{ repair.detailProbleme }}</p>
+                </div>
+              </div>
+              <div class="action-buttons">
+                <button class="edit-btn" (click)="startEditPending(repair)" title="Edit">
+                  <nb-icon icon="edit-outline"></nb-icon>
+                </button>
+                <button class="delete-btn" (click)="deleteReparation(repair, $event)" title="Delete">
+                  <nb-icon icon="trash-2-outline"></nb-icon>
+                </button>
+                <button class="launch-repair-btn" (click)="openLaunchRepair(repair)" title="Launch Repair">
+                  <nb-icon icon="play-circle-outline"></nb-icon>
+                </button>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== ONGOING REPAIRS ==================== -->
+      <div class="info-section" *ngIf="ongoingInternalRepairs.length > 0 || ongoingExternalRepairs.length > 0">
+        <div class="section-header">
+          <div class="header-left">
+            <nb-icon icon="settings-outline" class="section-icon"></nb-icon>
+            <h5>Ongoing Repairs</h5>
+          </div>
+        </div>
+        
+        <!-- Internal Repairs -->
+        <div *ngFor="let repair of ongoingInternalRepairs" class="repair-card internal" [class.editing]="editingInternalId === repair.idReparation">
+          
+          <!-- Edit Mode -->
+          <div *ngIf="editingInternalId === repair.idReparation" class="edit-mode" [formGroup]="editingInternalForm">
+            <div class="edit-form-row">
+              <div class="form-field">
+                <label>Technician</label>
+                <input type="text" formControlName="technicien" class="form-input">
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Problem Description</label>
+              <textarea formControlName="detailProbleme" rows="2" class="form-input"></textarea>
+            </div>
+            <div class="edit-actions">
+              <button class="save-btn" (click)="saveEditInternal(repair)">
+                <nb-icon icon="checkmark-outline"></nb-icon> Save
+              </button>
+              <button class="cancel-btn" (click)="cancelEditInternal()">
+                <nb-icon icon="close-outline"></nb-icon> Cancel
+              </button>
+            </div>
+          </div>
+          
+          <!-- Normal Mode -->
+          <div *ngIf="editingInternalId !== repair.idReparation">
+            <div class="repair-header">
+              <div class="repair-type">
+                <div class="type-icon-wrapper internal">
+                  <nb-icon icon="people-outline"></nb-icon>
+                </div>
+                <strong>Internal Repair</strong>
+              </div>
+              <div class="action-buttons">
+                <button class="edit-btn" (click)="startEditInternal(repair)" title="Edit">
+                  <nb-icon icon="edit-outline"></nb-icon>
+                </button>
+                <button class="delete-btn" (click)="deleteReparation(repair, $event)" title="Delete">
+                  <nb-icon icon="trash-2-outline"></nb-icon>
+                </button>
+                <span class="repair-status in-progress">In Progress</span>
+              </div>
+            </div>
+            <div class="repair-details">
+              <div class="detail-row">
+                <label>Technician:</label>
+                <span>{{ repair.technicien }}</span>
+              </div>
+              <div class="detail-row" *ngIf="repair.detailProbleme">
+                <label>Issue:</label>
+                <span>{{ repair.detailProbleme }}</span>
+              </div>
+            </div>
+            <div class="repair-actions">
+              <button class="complete-btn" (click)="openCompleteRepair(repair)">
+                <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                Mark as Fixed
+              </button>
+            </div>
+          </div>
+          
+        </div>
+        
+        <!-- External Repairs -->
+        <div *ngFor="let repair of ongoingExternalRepairs" class="repair-card external" [class.editing]="editingExternalId === repair.idReparation">
+          
+          <!-- Edit Mode -->
+          <div *ngIf="editingExternalId === repair.idReparation" class="edit-mode" [formGroup]="editingExternalForm">
+            <div class="edit-form-row">
+              <div class="form-field">
+                <label>Supplier</label>
+                <input type="text" formControlName="fournisseur" class="form-input">
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Date Sent</label>
+              <input type="date" formControlName="dateSortieChantier" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Problem Description</label>
+              <textarea formControlName="detailProbleme" rows="2" class="form-input"></textarea>
+            </div>
+            <div class="edit-actions">
+              <button class="save-btn" (click)="saveEditExternal(repair)">
+                <nb-icon icon="checkmark-outline"></nb-icon> Save
+              </button>
+              <button class="cancel-btn" (click)="cancelEditExternal()">
+                <nb-icon icon="close-outline"></nb-icon> Cancel
+              </button>
+            </div>
+          </div>
+          
+          <!-- Normal Mode -->
+          <div *ngIf="editingExternalId !== repair.idReparation">
+            <div class="repair-header">
+              <div class="repair-type">
+                <div class="type-icon-wrapper external">
+                  <nb-icon icon="building-outline"></nb-icon>
+                </div>
+                <strong>External Repair</strong>
+              </div>
+              <div class="action-buttons">
+                <button class="edit-btn" (click)="startEditExternal(repair)" title="Edit">
+                  <nb-icon icon="edit-outline"></nb-icon>
+                </button>
+                <button class="delete-btn" (click)="deleteReparation(repair, $event)" title="Delete">
+                  <nb-icon icon="trash-2-outline"></nb-icon>
+                </button>
+                <span class="repair-status sent">Sent to Supplier</span>
+              </div>
+            </div>
+            <div class="repair-details">
+              <div class="detail-row">
+                <label>Supplier:</label>
+                <span>{{ repair.fournisseur }}</span>
+              </div>
+              <div class="detail-row">
+                <label>Sent on:</label>
+                <span>{{ repair.dateSortieChantier | date }}</span>
+              </div>
+              <div class="detail-row" *ngIf="repair.detailProbleme">
+                <label>Issue:</label>
+                <span>{{ repair.detailProbleme }}</span>
+              </div>
+            </div>
+            <div class="repair-actions">
+              <button class="complete-btn" (click)="openCompleteRepair(repair)">
+                <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                Mark as Received & Fixed
+              </button>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- ==================== REPAIR HISTORY ==================== -->
+      <div class="info-section" *ngIf="completedRepairs.length > 0">
+        <div class="section-header">
+          <div class="header-left">
+            <nb-icon icon="checkmark-circle-outline" class="section-icon"></nb-icon>
+            <h5>Repair History</h5>
+          </div>
+          <button *ngIf="completedRepairs.length > 3" class="show-more-btn" (click)="showFullHistory = !showFullHistory">
+            <span>{{ showFullHistory ? 'Show Less' : 'Show More' }}</span>
+            <nb-icon [icon]="showFullHistory ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+          </button>
+        </div>
+        
+        <div class="history-list">
+          <div *ngFor="let repair of (showFullHistory ? completedRepairs : completedRepairs.slice(0, 3))" 
+               class="history-item">
+            <nb-icon [icon]="repair.type === 'INTERNE' ? 'people-outline' : 'building-outline'" class="history-icon"></nb-icon>
+            <div class="history-info">
+              <div class="history-header">
+                <strong>{{ repair.type === 'INTERNE' ? 'Internal' : 'External' }} Repair</strong>
+                <span class="history-date">{{ repair.dateReparation | date }}</span>
+              </div>
+              <div class="history-details">
+                <span>1 unit fixed</span>
+                <span class="cost" *ngIf="repair.cout">Cost: {{ repair.cout | currency:'DZD' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+ 
+
+<!-- ==================== ACTIVITY ASSIGNMENTS ==================== -->
+<div class="info-section">
+  <div class="section-header">
+    <div class="header-left">
+      <nb-icon icon="grid-outline" class="section-icon"></nb-icon>
+      <h5>Activity Assignments <span class="badge">{{ activityAffectations.length }}</span></h5>
+    </div>
+    <button *ngIf="!showBreakdownForm" class="action-btn primary-btn" (click)="loadActivities()">
+      <nb-icon icon="refresh-outline"></nb-icon>
+    </button>
+  </div>
+
+  <div class="affectations-list" *ngIf="activityAffectations.length > 0">
+    <div *ngFor="let affectation of activityAffectations" class="affectation-card" 
+         [class.editing]="editingActivityAffectationId === affectation.idAffectation">
+
+      <!-- Edit Mode -->
+      <div *ngIf="editingActivityAffectationId === affectation.idAffectation" class="edit-mode" [formGroup]="editingActivityAffectationForm">
+        <div class="edit-form-row">
+          <div class="form-field">
+            <label>Start Date *</label>
+            <input type="date" formControlName="dateDebut" class="form-input">
+          </div>
+          <div class="form-field">
+            <label>End Date</label>
+            <input type="date" formControlName="dateFin" class="form-input">
+          </div>
+        </div>
+        <div class="edit-actions">
+          <button class="save-btn" (click)="saveEditActivityAffectation(affectation)">
+            <nb-icon icon="checkmark-outline"></nb-icon> Save
+          </button>
+          <button class="cancel-btn" (click)="cancelEditActivityAffectation()">
+            <nb-icon icon="close-outline"></nb-icon> Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Normal Mode -->
+      <div *ngIf="editingActivityAffectationId !== affectation.idAffectation" class="affectation-info">
+        <div class="affectation-details">
+          <div class="affectation-header">
+            <nb-icon icon="grid-outline" class="affectation-icon"></nb-icon>
+            <div>
+              <strong>{{ affectation.activeCode }}</strong>
+              <span class="activity-objectif">{{ affectation.activeObjectif }}</span>
+              <div class="date-range">
+                {{ affectation.dateDebut | date }} 
+                <span *ngIf="affectation.dateFin"> → {{ affectation.dateFin | date }}</span>
+                <span *ngIf="!affectation.dateFin" class="ongoing-badge">Ongoing</span>
+                <span *ngIf="affectation.isActive" class="active-badge">Active</span>
+                <span *ngIf="!affectation.isActive && affectation.dateFin" class="inactive-badge">Completed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="edit-btn" (click)="startEditActivityAffectation(affectation)" title="Edit">
+            <nb-icon icon="edit-outline"></nb-icon>
+          </button>
+          <button class="delete-btn" (click)="deleteActivityAffectation(affectation, $event)" title="Delete">
+            <nb-icon icon="trash-2-outline"></nb-icon>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Empty state for activity affectations -->
+  <div *ngIf="activityAffectations.length === 0 && !isLoading" class="empty-state-small">
+    <nb-icon icon="grid-outline"></nb-icon>
+    <p>No activity assignments yet</p>
+    <small>Assign this equipment to an activity</small>
+  </div>
+</div>
+
+      <!-- Basic Information -->
+      <div class="info-section">
+        <div class="section-header">
+          <div class="header-left">
+            <nb-icon icon="info-outline" class="section-icon"></nb-icon>
+            <h5>Equipment Information</h5>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Code</label>
+            <span>{{ materiel.codeMateriel }}</span>
+          </div>
+          <div class="info-item">
+            <label>Brand</label>
+            <span>{{ materiel.marque }}</span>
+          </div>
+          <div class="info-item">
+            <label>Model</label>
+            <span>{{ materiel.modele || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Designation</label>
+            <span>{{ materiel.designation || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Purchase Date</label>
+            <span>{{ materiel.dateAchat | date }}</span>
+          </div>
+          <div class="info-item">
+            <label>Price</label>
+            <span>{{ materiel.prix | currency:'DZD' }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </nb-card-body>
+</nb-card>
+
+<!-- ==================== LAUNCH REPAIR MODAL ==================== -->
+<div class="modal-overlay" *ngIf="showLaunchRepairModal" (click)="showLaunchRepairModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>Launch Repair</h5>
+      <button class="close-btn" (click)="showLaunchRepairModal = false">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="launchRepairForm">
+      <div class="repair-options">
+        <label class="option-card" [class.selected]="launchRepairForm.get('type')?.value === 'INTERNE'">
+          <input type="radio" formControlName="type" value="INTERNE">
+          <div class="option-content">
+            <nb-icon icon="people-outline"></nb-icon>
+            <strong>Internal Repair</strong>
+            <small>Repair by internal team</small>
+          </div>
+        </label>
+        <label class="option-card" [class.selected]="launchRepairForm.get('type')?.value === 'EXTERNE'">
+          <input type="radio" formControlName="type" value="EXTERNE">
+          <div class="option-content">
+            <nb-icon icon="building-outline"></nb-icon>
+            <strong>External Repair</strong>
+            <small>Send to supplier</small>
+          </div>
+        </label>
+      </div>
+      
+      <div *ngIf="launchRepairForm.get('type')?.value === 'INTERNE'" class="dynamic-fields">
+        <div class="form-field">
+          <label>Technician Name *</label>
+          <input type="text" formControlName="technicien" class="form-input" placeholder="Enter technician name">
+        </div>
+      </div>
+      
+      <div *ngIf="launchRepairForm.get('type')?.value === 'EXTERNE'" class="dynamic-fields">
+        <div class="form-field">
+          <label>Supplier Name *</label>
+          <input type="text" formControlName="fournisseur" class="form-input" placeholder="Enter supplier name">
+        </div>
+        <div class="form-field">
+          <label>Date Sent to Supplier *</label>
+          <input type="date" formControlName="dateSortieChantier" class="form-input">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="showLaunchRepairModal = false">Cancel</button>
+      <button class="confirm-btn" (click)="launchRepair()" [disabled]="launchRepairForm.invalid">
+        <nb-icon icon="play-circle-outline"></nb-icon>
+        Launch Repair
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== COMPLETE REPAIR MODAL ==================== -->
+<div class="modal-overlay" *ngIf="showCompleteRepairModal" (click)="showCompleteRepairModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>Complete Repair</h5>
+      <button class="close-btn" (click)="showCompleteRepairModal = false">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="completeRepairForm">
+      <div class="form-field">
+        <label>Repair Completion Date *</label>
+        <input type="date" formControlName="dateReparation" class="form-input">
+      </div>
+      <div class="form-field">
+        <label>Total Cost (DZD) *</label>
+        <input type="number" formControlName="cout" class="form-input" min="0" step="0.01" placeholder="Enter total cost">
+      </div>
+      <div *ngIf="selectedOngoingRepair?.type === 'EXTERNE'" class="form-field">
+        <label>Date Received from Supplier *</label>
+        <input type="date" formControlName="dateEntreeChantier" class="form-input">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="showCompleteRepairModal = false">Cancel</button>
+      <button class="confirm-btn" (click)="completeRepair()" [disabled]="completeRepairForm.invalid">
+        <nb-icon icon="checkmark-circle-outline"></nb-icon>
+        Complete Repair
+      </button>
+    </div>
+  </div>
+</div>

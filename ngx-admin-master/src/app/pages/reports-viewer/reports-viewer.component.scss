@@ -1,0 +1,1173 @@
+@import '../../@theme/styles/themes';
+
+@include nb-install-component() {
+
+  $primary: #3b82f6;
+  $success: #10b981;
+  $warning: #f59e0b;
+  $danger: #ef4444;
+  $gray: #64748b;
+  $light: #f8fafc;
+  $dark: #1e293b;
+  $border-radius: 12px;
+  $transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Status colors
+  $status-planned: #64748b;
+  $status-progress: #3b82f6;
+  $status-pending: #f59e0b;
+  $status-delayed: #ef4444;
+  $status-completed: #10b981;
+  $status-cancelled: #94a3b8;
+
+  // ========== CONTAINER ==========
+  .reports-viewer-container {
+    display: flex;
+    min-height: 100vh;
+    background: nb-theme(background-basic-color-1);
+  }
+
+  // ========== MOBILE TOGGLE ==========
+  .mobile-toggle-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    background: $primary;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba($primary, 0.3);
+    transition: all $transition;
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 24px rgba($primary, 0.4);
+    }
+    
+    i {
+      font-size: 1.1rem;
+    }
+  }
+
+  // ========== SIDEBAR ==========
+  .projects-sidebar {
+    width: 320px;
+    min-height: 100vh;
+    background: nb-theme(background-basic-color-2);
+    border-right: 1px solid nb-theme(border-basic-color-3);
+    display: flex;
+    flex-direction: column;
+    transition: all $transition;
+    flex-shrink: 0;
+
+    &.collapsed {
+      width: 0;
+      overflow: hidden;
+      border: none;
+    }
+
+    .sidebar-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid nb-theme(border-basic-color-3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .sidebar-icon {
+          color: $primary;
+          font-size: 1.3rem;
+        }
+
+        h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+
+        .project-count {
+          background: rgba($primary, 0.1);
+          color: $primary;
+          padding: 2px 10px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+        }
+      }
+
+      .close-sidebar {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: nb-theme(text-hint-color);
+        font-size: 1.2rem;
+        transition: all $transition;
+        padding: 4px 8px;
+        border-radius: 8px;
+        
+        &:hover {
+          background: rgba($danger, 0.1);
+          color: $danger;
+          transform: rotate(90deg);
+        }
+      }
+    }
+
+    .sidebar-search {
+      padding: 12px 16px;
+      position: relative;
+      border-bottom: 1px solid nb-theme(border-basic-color-3);
+
+      .search-icon {
+        position: absolute;
+        left: 28px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: nb-theme(text-hint-color);
+        font-size: 0.85rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        border: 1px solid nb-theme(border-basic-color-3);
+        border-radius: 8px;
+        background: nb-theme(background-basic-color-1);
+        font-size: 0.85rem;
+        transition: all $transition;
+
+        &:focus {
+          outline: none;
+          border-color: $primary;
+          box-shadow: 0 0 0 3px rgba($primary, 0.1);
+        }
+      }
+    }
+
+    .projects-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: nb-theme(background-basic-color-3);
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: $primary;
+        border-radius: 10px;
+      }
+
+      .no-projects {
+        text-align: center;
+        padding: 40px 20px;
+        color: nb-theme(text-hint-color);
+        
+        i {
+          font-size: 3rem;
+          margin-bottom: 12px;
+          opacity: 0.5;
+        }
+        
+        p {
+          font-size: 0.9rem;
+        }
+      }
+
+      .project-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all $transition;
+        position: relative;
+        border: 1px solid transparent;
+
+        &:hover {
+          background: nb-theme(background-basic-color-3);
+          transform: translateX(4px);
+        }
+
+        &.active {
+          background: rgba($primary, 0.08);
+          border-color: rgba($primary, 0.2);
+          box-shadow: 0 2px 8px rgba($primary, 0.1);
+        }
+
+        .project-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all $transition;
+          
+          i {
+            font-size: 1.1rem;
+          }
+
+          &.status-planned { 
+            background: rgba($status-planned, 0.12); 
+            i { color: $status-planned; } 
+          }
+          &.status-progress { 
+            background: rgba($status-progress, 0.12); 
+            i { color: $status-progress; } 
+          }
+          &.status-pending { 
+            background: rgba($status-pending, 0.12); 
+            i { color: $status-pending; } 
+          }
+          &.status-delayed { 
+            background: rgba($status-delayed, 0.12); 
+            i { color: $status-delayed; } 
+          }
+          &.status-completed { 
+            background: rgba($status-completed, 0.12); 
+            i { color: $status-completed; } 
+          }
+          &.status-cancelled { 
+            background: rgba($status-cancelled, 0.12); 
+            i { color: $status-cancelled; } 
+          }
+        }
+
+        .project-info {
+          flex: 1;
+          min-width: 0;
+
+          .project-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            
+            .project-code {
+              color: nb-theme(text-hint-color);
+              background: nb-theme(background-basic-color-3);
+              padding: 1px 8px;
+              border-radius: 10px;
+            }
+            
+            .project-progress {
+              font-weight: 600;
+              color: $primary;
+            }
+          }
+        }
+
+        .project-status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          flex-shrink: 0;
+
+          &.status-planned { background: $status-planned; }
+          &.status-progress { background: $status-progress; }
+          &.status-pending { background: $status-pending; }
+          &.status-delayed { background: $status-delayed; }
+          &.status-completed { background: $status-completed; }
+          &.status-cancelled { background: $status-cancelled; }
+        }
+      }
+    }
+  }
+
+  // ========== MAIN CONTENT ==========
+  .main-content {
+    flex: 1;
+    padding: 24px 32px;
+    overflow-y: auto;
+    min-height: 100vh;
+    transition: all $transition;
+
+    &.sidebar-collapsed {
+      margin-left: 0;
+    }
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: nb-theme(background-basic-color-3);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: $primary;
+      border-radius: 10px;
+    }
+  }
+
+  // ========== LOADING ==========
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid nb-theme(border-basic-color-3);
+      border-top-color: $primary;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    p {
+      margin-top: 16px;
+      color: nb-theme(text-hint-color);
+    }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  // ========== MISSION FILTER ==========
+  .mission-filter-wrapper {
+    margin-bottom: 24px;
+
+    .mission-filter {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: nb-theme(background-basic-color-2);
+      border-radius: $border-radius;
+      border: 1px solid nb-theme(border-basic-color-3);
+
+      .filter-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: nb-theme(text-basic-color);
+        white-space: nowrap;
+        
+        i {
+          color: $primary;
+        }
+      }
+
+      .mission-select {
+        flex: 1;
+        max-width: 300px;
+        padding: 8px 12px;
+        border: 1px solid nb-theme(border-basic-color-3);
+        border-radius: 8px;
+        background: nb-theme(background-basic-color-1);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all $transition;
+        
+        &:hover {
+          border-color: $primary;
+        }
+        
+        &:focus {
+          outline: none;
+          border-color: $primary;
+          box-shadow: 0 0 0 3px rgba($primary, 0.1);
+        }
+      }
+    }
+  }
+
+  // ========== PROJECT HEADER ==========
+  .project-header {
+    background: nb-theme(background-basic-color-2);
+    border-radius: $border-radius;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    border: 1px solid nb-theme(border-basic-color-3);
+
+    .project-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      .project-icon-large {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        
+        i {
+          font-size: 1.6rem;
+        }
+
+        &.status-planned { 
+          background: rgba($status-planned, 0.12); 
+          i { color: $status-planned; } 
+        }
+        &.status-progress { 
+          background: rgba($status-progress, 0.12); 
+          i { color: $status-progress; } 
+        }
+        &.status-pending { 
+          background: rgba($status-pending, 0.12); 
+          i { color: $status-pending; } 
+        }
+        &.status-delayed { 
+          background: rgba($status-delayed, 0.12); 
+          i { color: $status-delayed; } 
+        }
+        &.status-completed { 
+          background: rgba($status-completed, 0.12); 
+          i { color: $status-completed; } 
+        }
+        &.status-cancelled { 
+          background: rgba($status-cancelled, 0.12); 
+          i { color: $status-cancelled; } 
+        }
+      }
+
+      .project-header-info {
+        h1 {
+          margin: 0 0 8px;
+          font-size: 1.6rem;
+          font-weight: 700;
+        }
+
+        .project-badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            
+            &.mission-badge {
+              background: rgba($primary, 0.12);
+              color: $primary;
+            }
+            
+            &.progress-badge {
+              color: white;
+            }
+            
+            &.status-badge {
+              &.status-planned { background: $status-planned; color: white; }
+              &.status-progress { background: $status-progress; color: white; }
+              &.status-pending { background: $status-pending; color: white; }
+              &.status-delayed { background: $status-delayed; color: white; }
+              &.status-completed { background: $status-completed; color: white; }
+              &.status-cancelled { background: $status-cancelled; color: white; }
+            }
+          }
+        }
+      }
+    }
+
+    .project-description {
+      margin: 0;
+      color: nb-theme(text-hint-color);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+  }
+
+  // ========== REPORTS SECTION ==========
+  .reports-section {
+    .reports-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+
+      .reports-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        i {
+          color: $primary;
+          font-size: 1.3rem;
+        }
+
+        h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+
+        .reports-count {
+          background: rgba($primary, 0.1);
+          color: $primary;
+          padding: 2px 10px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+        }
+      }
+
+      .reports-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        .search-box {
+          position: relative;
+          min-width: 240px;
+
+          i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: nb-theme(text-hint-color);
+            font-size: 0.85rem;
+          }
+
+          input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid nb-theme(border-basic-color-3);
+            border-radius: 8px;
+            background: nb-theme(background-basic-color-1);
+            font-size: 0.85rem;
+            transition: all $transition;
+            
+            &:focus {
+              outline: none;
+              border-color: $primary;
+              box-shadow: 0 0 0 3px rgba($primary, 0.1);
+            }
+          }
+
+          .clear-search {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: nb-theme(text-hint-color);
+            padding: 4px;
+            border-radius: 50%;
+            transition: all $transition;
+            
+            &:hover {
+              background: rgba($danger, 0.1);
+              color: $danger;
+            }
+          }
+        }
+
+        .filter-toggle-btn {
+          background: nb-theme(background-basic-color-1);
+          border: 1px solid nb-theme(border-basic-color-3);
+          padding: 8px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.85rem;
+          transition: all $transition;
+          white-space: nowrap;
+          
+          &:hover {
+            border-color: $primary;
+            background: rgba($primary, 0.05);
+          }
+
+          &.active {
+            border-color: $primary;
+            background: rgba($primary, 0.08);
+          }
+        }
+      }
+    }
+
+    .advanced-filters {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      padding: 16px 20px;
+      background: nb-theme(background-basic-color-2);
+      border-radius: $border-radius;
+      margin-bottom: 20px;
+      border: 1px solid nb-theme(border-basic-color-3);
+
+      .filter-group {
+        min-width: 120px;
+
+        label {
+          display: block;
+          font-size: 0.7rem;
+          font-weight: 600;
+          margin-bottom: 4px;
+          color: nb-theme(text-hint-color);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        select, input {
+          width: 100%;
+          padding: 6px 10px;
+          border: 1px solid nb-theme(border-basic-color-3);
+          border-radius: 6px;
+          background: nb-theme(background-basic-color-1);
+          font-size: 0.85rem;
+          transition: all $transition;
+          
+          &:focus {
+            outline: none;
+            border-color: $primary;
+          }
+        }
+      }
+
+      .reset-filters-btn {
+        background: $gray;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        transition: all $transition;
+        height: 34px;
+        
+        &:hover {
+          background: $danger;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba($danger, 0.3);
+        }
+      }
+    }
+
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+
+      .report-card {
+        background: nb-theme(background-basic-color-2);
+        border-radius: $border-radius;
+        border: 1px solid nb-theme(border-basic-color-3);
+        cursor: pointer;
+        transition: all $transition;
+        overflow: hidden;
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+          border-color: $primary;
+        }
+
+        .report-card-header {
+          padding: 16px 20px;
+          border-bottom: 1px solid nb-theme(border-basic-color-3);
+          display: flex;
+          gap: 14px;
+          align-items: flex-start;
+
+          .report-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            background: rgba($primary, 0.08);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            
+            i {
+              font-size: 1.2rem;
+              color: $primary;
+            }
+          }
+
+          .report-card-title {
+            flex: 1;
+            min-width: 0;
+
+            h4 {
+              margin: 0 0 4px;
+              font-size: 0.95rem;
+              font-weight: 600;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .report-date {
+              font-size: 0.75rem;
+              color: nb-theme(text-hint-color);
+              
+              i {
+                margin-right: 4px;
+              }
+            }
+          }
+        }
+
+        .report-card-body {
+          padding: 16px 20px;
+
+          p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: nb-theme(text-hint-color);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+        }
+
+        .report-card-footer {
+          padding: 10px 20px;
+          background: nb-theme(background-basic-color-3);
+          border-top: 1px solid nb-theme(border-basic-color-3);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.75rem;
+
+          .readonly-badge {
+            color: $gray;
+            
+            i {
+              margin-right: 4px;
+            }
+          }
+
+          .view-link {
+            color: $primary;
+            font-weight: 500;
+            
+            i {
+              margin-left: 4px;
+              transition: transform $transition;
+            }
+            
+            &:hover i {
+              transform: translateX(4px);
+            }
+          }
+        }
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      
+      .empty-icon {
+        i {
+          font-size: 4rem;
+          color: nb-theme(text-hint-color);
+          opacity: 0.4;
+        }
+      }
+      
+      h3 {
+        margin: 16px 0 8px;
+        font-size: 1.2rem;
+      }
+      
+      p {
+        color: nb-theme(text-hint-color);
+        margin-bottom: 20px;
+      }
+      
+      .clear-filters-btn {
+        background: $primary;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all $transition;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba($primary, 0.3);
+        }
+      }
+    }
+  }
+
+  // ========== PAGINATION ==========
+  .pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid nb-theme(border-basic-color-3);
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .pagination-info {
+      font-size: 0.85rem;
+      color: nb-theme(text-hint-color);
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .page-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid nb-theme(border-basic-color-3);
+        background: nb-theme(background-basic-color-1);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all $transition;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover:not(:disabled) {
+          background: $primary;
+          color: white;
+          border-color: $primary;
+          transform: translateY(-2px);
+        }
+
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          transform: none !important;
+        }
+      }
+
+      .page-numbers {
+        display: flex;
+        gap: 4px;
+
+        .page-num {
+          min-width: 34px;
+          height: 34px;
+          border: 1px solid nb-theme(border-basic-color-3);
+          background: nb-theme(background-basic-color-1);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all $transition;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.85rem;
+
+          &:hover {
+            background: rgba($primary, 0.08);
+            border-color: $primary;
+          }
+
+          &.active {
+            background: $primary;
+            color: white;
+            border-color: $primary;
+            box-shadow: 0 2px 8px rgba($primary, 0.3);
+          }
+        }
+      }
+    }
+  }
+
+  // ========== MODAL ==========
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-container {
+    background: nb-theme(background-basic-color-2);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid nb-theme(border-basic-color-3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h3 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+        
+        i {
+          color: $primary;
+        }
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: nb-theme(text-hint-color);
+        transition: all $transition;
+        padding: 4px 8px;
+        border-radius: 8px;
+        
+        &:hover {
+          background: rgba($danger, 0.1);
+          color: $danger;
+          transform: rotate(90deg);
+        }
+      }
+    }
+
+    .modal-body {
+      padding: 24px;
+
+      .report-detail-title {
+        margin-bottom: 20px;
+
+        h2 {
+          margin: 0 0 12px;
+          font-size: 1.3rem;
+        }
+
+        .report-detail-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+
+          span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: nb-theme(text-hint-color);
+          }
+        }
+      }
+
+      .report-detail-content {
+        h4 {
+          margin: 0 0 8px;
+          font-size: 0.95rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          
+          i {
+            color: $primary;
+          }
+        }
+        
+        p {
+          margin: 0;
+          line-height: 1.6;
+          color: nb-theme(text-basic-color);
+        }
+      }
+
+      .report-detail-footer {
+        margin-top: 20px;
+        
+        .readonly-notice {
+          background: rgba($gray, 0.08);
+          padding: 12px 16px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: $gray;
+          font-size: 0.85rem;
+          
+          i {
+            color: $gray;
+          }
+        }
+      }
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid nb-theme(border-basic-color-3);
+      display: flex;
+      justify-content: flex-end;
+
+      .btn-close {
+        background: $primary;
+        border: none;
+        padding: 8px 24px;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all $transition;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba($primary, 0.3);
+        }
+      }
+    }
+  }
+
+  // ========== RESPONSIVE ==========
+  @media (max-width: 768px) {
+    .projects-sidebar {
+      position: fixed;
+      left: -100%;
+      top: 0;
+      height: 100vh;
+      z-index: 200;
+      width: 280px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+
+      &.collapsed {
+        left: 0;
+      }
+    }
+
+    .main-content {
+      padding: 16px;
+    }
+
+    .project-header {
+      padding: 16px 20px;
+
+      .project-header-left {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    .reports-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .reports-header {
+      flex-direction: column;
+      align-items: stretch;
+
+      .reports-actions {
+        flex-direction: column;
+        align-items: stretch;
+
+        .search-box {
+          min-width: auto;
+        }
+      }
+    }
+
+    .advanced-filters {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .filter-group {
+        min-width: auto;
+        width: 100%;
+      }
+
+      .reset-filters-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    .pagination-wrapper {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .mission-filter {
+      flex-direction: column;
+      align-items: stretch;
+
+      .mission-select {
+        max-width: 100%;
+      }
+    }
+
+    .modal-container {
+      width: 95%;
+      margin: 16px;
+    }
+  }
+}

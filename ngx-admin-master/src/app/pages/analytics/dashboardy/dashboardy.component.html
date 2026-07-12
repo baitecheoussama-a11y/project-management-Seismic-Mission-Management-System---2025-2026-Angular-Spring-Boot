@@ -1,0 +1,157 @@
+<!-- src/app/pages/dashboard/dashboard.component.html -->
+<div class="dashboard-container">
+  
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading Dashboard...</p>
+  </div>
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-left">
+      <h1><i class="fas fa-chart-pie"></i> Executive Dashboard</h1>
+      <p class="header-subtitle">Real-time analytics and insights for project management</p>
+    </div>
+  
+  </div>
+
+  <!-- KPIs Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon total-cost">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div class="kpi-content">
+        <div class="kpi-value">{{ formatCurrency(kpis?.totalCost || 0) }}</div>
+        <div class="kpi-label">Total Cost</div>
+      </div>
+      <div class="kpi-trend positive">
+        <i class="fas fa-arrow-up"></i>
+        {{ kpis?.costChangePercent || 0 }}%
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon total-projects">
+        <i class="fas fa-project-diagram"></i>
+      </div>
+      <div class="kpi-content">
+        <div class="kpi-value">{{ kpis?.totalProjects || 0 }}</div>
+        <div class="kpi-label">Total Projects</div>
+      </div>
+      <div class="kpi-trend">
+        <i class="fas fa-arrow-up"></i>
+        {{ kpis?.activeProjects || 0 }} active
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon avg-progress">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="kpi-content">
+        <div class="kpi-value">{{ kpis?.avgProgression || 0 }}%</div>
+        <div class="kpi-label">Avg Progression</div>
+      </div>
+      <div class="kpi-trend" [class.positive]="(kpis?.progressionChangePercent || 0) >= 0">
+        <i class="fas" [class.fa-arrow-up]="(kpis?.progressionChangePercent || 0) >= 0" [class.fa-arrow-down]="(kpis?.progressionChangePercent || 0) < 0"></i>
+        {{ kpis?.progressionChangePercent || 0 }}%
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon budget-usage">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div class="kpi-content">
+        <div class="kpi-value">{{ kpis?.avgBudgetUsage || 0 }}%</div>
+        <div class="kpi-label">Budget Usage</div>
+      </div>
+      <div class="kpi-trend">
+        <i class="fas fa-info-circle"></i>
+        {{ kpis?.avgCostPerProject || 0 }} DA/project
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="charts-grid">
+    <!-- Status Chart -->
+    <div class="chart-card status-card">
+      <div class="chart-header">
+        <h3><i class="fas fa-chart-pie"></i> Project Status</h3>
+        <span class="chart-badge">Distribution</span>
+      </div>
+      <div class="chart-body">
+        <canvas #statusChart></canvas>
+      </div>
+    </div>
+
+    <!-- Cost by Mission Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3><i class="fas fa-coins"></i> Cost by Mission</h3>
+        <span class="chart-badge">Bar Chart</span>
+      </div>
+      <div class="chart-body">
+        <canvas #costChart></canvas>
+      </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div class="chart-card full-width">
+      <div class="chart-header">
+        <h3><i class="fas fa-chart-line"></i> 30-Day Trend</h3>
+        <span class="chart-badge">Line Chart</span>
+      </div>
+      <div class="chart-body">
+        <canvas #trendChart></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card" *ngIf="costByMission.length > 0">
+    <div class="table-header">
+      <h3><i class="fas fa-table"></i> Mission Cost Breakdown</h3>
+      <span class="table-count">{{ costByMission.length }} missions</span>
+    </div>
+    <div class="table-body">
+      <table>
+        <thead>
+          <tr>
+            <th>Mission</th>
+            <th>Methodologie</th>
+            <th>Projects</th>
+            <th>Total Cost</th>
+            <th>Budget</th>
+            <th>Usage %</th>
+            <th>Avg Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of costByMission">
+            <td><strong>{{ item.missionCode }}</strong></td>
+            <td><span class="badge">{{ item.methodologie }}</span></td>
+            <td>{{ item.projectCount }}</td>
+            <td>{{ formatCurrency(item.totalCost) }}</td>
+            <td>{{ formatCurrency(item.totalBudget) }}</td>
+            <td>
+              <div class="progress-bar-mini">
+                <div class="progress-fill" [style.width.%]="item.budgetUsagePercent" 
+                     [style.background]="getProgressColor(item.budgetUsagePercent)"></div>
+              </div>
+              <span class="progress-text">{{ item.budgetUsagePercent | number:'1.0-0' }}%</span>
+            </td>
+            <td>
+              <span class="progress-value" [style.color]="getProgressColor(item.avgProgression)">
+                {{ item.avgProgression | number:'1.0-0' }}%
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

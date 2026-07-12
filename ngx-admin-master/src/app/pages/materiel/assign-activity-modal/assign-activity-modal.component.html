@@ -1,0 +1,51 @@
+<div class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h5><nb-icon icon="grid-outline"></nb-icon> Assign Equipment to Activity</h5>
+      <button class="close-btn" (click)="close()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="selected-count">
+        <nb-icon icon="hard-drive-outline"></nb-icon>
+        <span>{{ selectedMateriels.length }} equipment(s) selected</span>
+      </div>
+
+      <div class="form-field" [formGroup]="assignForm">
+        <label>Select Activity *</label>
+        <select formControlName="activeId" class="form-input">
+          <option [value]="null">-- Select Activity --</option>
+          <option *ngFor="let activity of availableActivities" [value]="activity.id">
+            {{ activity.codeActive }} - {{ activity.objectif }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-field" [formGroup]="assignForm">
+        <label>Start Date *</label>
+        <input type="date" formControlName="dateDebut" class="form-input">
+      </div>
+
+      <div class="form-field" [formGroup]="assignForm">
+        <label>End Date (Optional)</label>
+        <input type="date" formControlName="dateFin" class="form-input">
+      </div>
+
+      <div class="info-note">
+        <nb-icon icon="info-outline"></nb-icon>
+        <span>Equipment will be marked as "In Use" once assigned to an activity</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="close()">Cancel</button>
+      <button class="confirm-btn" (click)="submit()" [disabled]="assignForm.invalid || isLoading">
+        <nb-icon *ngIf="!isLoading" icon="checkmark-outline"></nb-icon>
+        <nb-icon *ngIf="isLoading" icon="loader-outline" class="spin"></nb-icon>
+        {{ isLoading ? 'Assigning...' : 'Assign to Activity' }}
+      </button>
+    </div>
+  </div>
+</div>

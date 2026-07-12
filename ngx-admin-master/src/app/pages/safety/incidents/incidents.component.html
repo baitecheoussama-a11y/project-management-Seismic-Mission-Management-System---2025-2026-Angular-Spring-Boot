@@ -1,0 +1,295 @@
+<!-- src/app/pages/safety/incidents/incidents.component.html -->
+
+<div class="incidents-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-title">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h1>Safety Incidents</h1>
+    </div>
+   <button *ngIf="canManageIncidents" class="btn-add" (click)="openAddModal()">
+  <i class="fas fa-plus"></i>
+  <span>Report Incident</span>
+</button>
+  </div>
+
+  <!-- STATS CARDS -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ incidents.length }}</div>
+        <div class="stat-label">Total Incidents</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon critical">
+        <i class="fas fa-skull-crossbones"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ statsByGravite['CRITIQUE'] || 0 }}</div>
+        <div class="stat-label">Critical</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon high">
+        <i class="fas fa-exclamation-circle"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ statsByGravite['ELEVE'] || 0 }}</div>
+        <div class="stat-label">High Severity</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon recent">
+        <i class="fas fa-calendar-week"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ getMin(30, incidents.length) }}</div>
+        <div class="stat-label">Last 30 days</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS BAR -->
+  <div class="filters-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        placeholder="Search by description, employee or type..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput()"
+      />
+      <button class="clear-btn" *ngIf="searchTerm" (click)="clearSearch()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <button class="filter-toggle-btn" (click)="toggleFilters()">
+      <i class="fas fa-filter"></i>
+      <span>Filters</span>
+      <span class="filter-badge" *ngIf="isFilterApplied()">!</span>
+    </button>
+  </div>
+
+  <!-- ADVANCED FILTERS -->
+  <div class="advanced-filters" *ngIf="showFilters">
+    <div class="filter-group">
+      <label>Incident Type</label>
+      <select [(ngModel)]="typeFilter" (change)="applyFilters()">
+        <option value="all">All Types</option>
+        <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Severity Level</label>
+      <select [(ngModel)]="graviteFilter" (change)="applyFilters()">
+        <option value="all">All Severities</option>
+        <option *ngFor="let gravite of graviteOptions" [value]="gravite.value">{{ gravite.label }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Sort By</label>
+      <select [(ngModel)]="sortBy" (change)="applyFilters()">
+        <option value="date">Date</option>
+        <option value="type">Type</option>
+        <option value="severity">Severity</option>
+        <option value="employee">Employee</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Order</label>
+      <select [(ngModel)]="sortOrder" (change)="applyFilters()">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+      </select>
+    </div>
+    <button class="reset-filters-btn" (click)="resetFilters()">
+      <i class="fas fa-undo-alt"></i>
+      <span>Reset</span>
+    </button>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading-spinner" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading incidents...</p>
+  </div>
+
+  <!-- INCIDENTS GRID -->
+  <div class="incidents-grid" *ngIf="!isLoading && paginatedIncidents.length > 0">
+    <div class="incident-card" *ngFor="let incident of paginatedIncidents">
+      <div class="card-header">
+        <div class="type-badge" [style.background]="getTypeColor(incident.type)">
+          <i class="fas fa-tag"></i>
+          <span>{{ getTypeLabel(incident.type) }}</span>
+        </div>
+        <div class="severity-badge" [style.background]="getGraviteColor(incident.niveauGravite)">
+          <i class="fas fa-chart-simple"></i>
+          <span>{{ getGraviteLabel(incident.niveauGravite) }}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="incident-date">
+          <i class="fas fa-calendar-alt"></i>
+          <span>{{ formatDate(incident.dateIncident) }}</span>
+          <span class="recent-badge" *ngIf="isRecentIncident(incident.dateIncident)">Recent</span>
+        </div>
+        <p class="incident-description">{{ incident.description }}</p>
+        <div class="incident-employee">
+          <i class="fas fa-user"></i>
+          <span>{{ incident.employeFullName || getEmployeeName(incident.employeId) }}</span>
+        </div>
+        <div class="incident-location" *ngIf="incident.latitude || incident.longitude">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Lat: {{ incident.latitude || 'N/A' }}, Long: {{ incident.longitude || 'N/A' }}</span>
+        </div>
+        <div class="incident-medical" *ngIf="incident.tempsArretTravail">
+          <i class="fas fa-clock"></i>
+          <span>Work stoppage: {{ incident.tempsArretTravail }} days</span>
+        </div>
+      </div>
+     <div class="card-actions" *ngIf="canManageIncidents">
+  <button class="btn-edit" (click)="openEditModal(incident)">
+    <i class="fas fa-edit"></i>
+    <span>Edit</span>
+  </button>
+  <button class="btn-delete" (click)="deleteIncident(incident)">
+    <i class="fas fa-trash-alt"></i>
+    <span>Delete</span>
+  </button>
+</div>
+<!-- Read-only badge for unauthorized users -->
+<div class="card-actions-readonly" *ngIf="!canManageIncidents">
+  <span class="readonly-badge">
+    <i class="fas fa-lock"></i>
+    Read Only
+  </span>
+</div>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" *ngIf="!isLoading && filteredIncidents.length === 0">
+    <i class="fas fa-shield-alt"></i>
+    <h3>No incidents found</h3>
+    <p>Get started by reporting the first safety incident</p>
+   <button *ngIf="canManageIncidents" class="btn-add-first" (click)="openAddModal()">
+  <i class="fas fa-plus"></i>
+  <span>Report Incident</span>
+</button>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="pagination" *ngIf="!isLoading && filteredIncidents.length > 0">
+    <div class="pagination-info">
+      Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ getMin(currentPage * pageSize, filteredIncidents.length) }} of {{ filteredIncidents.length }} incidents
+    </div>
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <div class="page-numbers">
+        <button 
+          *ngFor="let page of getPageNumbers()" 
+          class="page-num" 
+          [class.active]="page === currentPage"
+          (click)="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+      <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" *ngIf="(showAddModal || showEditModal) && canManageIncidents" (click)="closeModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas" [class.fa-plus-circle]="showAddModal" [class.fa-edit]="showEditModal"></i>
+        <span>{{ showAddModal ? 'Report New Incident' : 'Edit Incident' }}</span>
+      </h3>
+      <button class="close-btn" (click)="closeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="incidentForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Incident Type *</label>
+            <select formControlName="type">
+              <option value="" disabled>Select type</option>
+              <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Severity Level *</label>
+            <select formControlName="niveauGravite">
+              <option value="" disabled>Select severity</option>
+              <option *ngFor="let gravite of graviteOptions" [value]="gravite.value">{{ gravite.label }}</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Incident Date *</label>
+            <input type="date" formControlName="dateIncident" />
+          </div>
+          <div class="form-group">
+            <label>Employee *</label>
+            <select formControlName="employeId">
+              <option [value]="null" disabled>Select employee</option>
+              <option *ngFor="let employee of employees" [value]="employee.id">
+                {{ employee.prenom }} {{ employee.nom }}
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea rows="3" formControlName="description" placeholder="Describe the incident..."></textarea>
+        </div>
+        
+        <div class="section-divider">
+          <hr />
+          <span>Location Details (Optional)</span>
+          <hr />
+        </div>
+        
+        <div formGroupName="coordonnee">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitude</label>
+              <input type="text" formControlName="latitude" placeholder="e.g., 36.7538" />
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input type="text" formControlName="longitude" placeholder="e.g., 3.0588" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Order Number</label>
+            <input type="number" formControlName="ordre" placeholder="Order sequence" />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+      <button class="btn-confirm" (click)="submitForm()" [disabled]="incidentForm.invalid">
+        <i class="fas" [class.fa-save]="showAddModal" [class.fa-check]="showEditModal"></i>
+        <span>{{ showAddModal ? 'Create Incident' : 'Update Incident' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

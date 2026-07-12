@@ -1,0 +1,383 @@
+<div class="activities-container">
+  
+  <!-- Toggle Sidebar Button -->
+  <button class="toggle-sidebar-btn" (click)="toggleSidebar()" [class.collapsed]="sidebarCollapsed && !isMobile">
+    <nb-icon [icon]="sidebarCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+  </button>
+
+  <!-- Mobile Toggle Button -->
+  <button *ngIf="isMobile && sidebarCollapsed" class="mobile-toggle-btn" (click)="toggleSidebar()">
+    <nb-icon icon="menu-outline"></nb-icon>
+  </button>
+
+  <!-- Sidebar -->
+  <div class="custom-sidebar" [class.collapsed]="sidebarCollapsed && !isMobile" [class.mobile-collapsed]="isMobile && sidebarCollapsed">
+    <div class="sidebar-header">
+      <div class="header-content">
+        <nb-icon icon="grid-outline" class="header-icon"></nb-icon>
+        <h3>Teams</h3>
+        <span class="teams-count">{{ filteredEquipes.length }}</span>
+      </div>
+      <button *ngIf="!isMobile" class="close-sidebar-btn" (click)="toggleSidebar()">
+        <nb-icon icon="chevron-right-outline"></nb-icon>
+      </button>
+    </div>
+
+    <!-- Team Search Bar -->
+    <div class="sidebar-search">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Search teams by name or type..." 
+          [(ngModel)]="teamSearchTerm"
+          (input)="filterTeams()"
+        />
+        <button *ngIf="teamSearchTerm" class="clear-search-btn" (click)="clearTeamSearch()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Team Section -->
+    <div class="add-section" *ngIf="canManageTeams">
+      <button *ngIf="!isAddingTeam" class="add-btn" (click)="startAddTeam()">
+        <nb-icon icon="plus-outline"></nb-icon><span>Add Team</span>
+      </button>
+      <div *ngIf="isAddingTeam" class="add-inline">
+        <input type="text" class="add-input" [(ngModel)]="newTeamName" (keyup.enter)="createTeam()" placeholder="Team name..." #teamNameInput />
+        <select [(ngModel)]="newTeamType" class="add-select">
+          <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+        </select>
+        <div class="add-actions">
+          <button class="confirm-btn" (click)="createTeam()"><nb-icon icon="checkmark-outline"></nb-icon></button>
+          <button class="cancel-btn" (click)="cancelAddTeam()"><nb-icon icon="close-outline"></nb-icon></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams List -->
+    <div class="teams-section">
+      <div class="teams-list">
+        <div *ngIf="filteredEquipes.length === 0" class="no-results">
+          <nb-icon icon="grid-outline"></nb-icon>
+          <span>No teams found</span>
+          <small *ngIf="teamSearchTerm">Try a different search term</small>
+          <small *ngIf="!teamSearchTerm && canManageTeams">Click "Add Team" to get started</small>
+        </div>
+        <div *ngFor="let equipe of filteredEquipes" class="team-item" [class.selected]="selectedEquipe?.id === equipe.id" (click)="selectTeam(equipe)">
+          <div *ngIf="editingTeamId === equipe.id && canManageTeams" class="edit-mode" (click)="$event.stopPropagation()">
+            <input type="text" class="edit-input" [(ngModel)]="editingTeamName" (keyup.enter)="saveEditTeam(equipe)" #editTeamInput />
+            <select [(ngModel)]="editingTeamType" class="edit-select">
+              <option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</option>
+            </select>
+            <div class="edit-actions">
+              <button class="confirm-btn" (click)="saveEditTeam(equipe)"><nb-icon icon="checkmark-outline"></nb-icon></button>
+              <button class="cancel-btn" (click)="cancelEditTeam()"><nb-icon icon="close-outline"></nb-icon></button>
+            </div>
+          </div>
+          <div *ngIf="editingTeamId !== equipe.id || !canManageTeams" class="normal-mode">
+            <div class="team-info">
+              <div class="team-icon" [style.background]="getTypeColor(equipe.type)">
+                <i [class]="getTypeIcon(equipe.type)"></i>
+              </div>
+              <div class="team-details">
+                <span class="team-name">{{ equipe.nom }}</span>
+                <span class="team-type">{{ getTypeLabel(equipe.type) }}</span>
+              </div>
+              <div class="team-stats">
+                <span class="stat-badge">
+                  <nb-icon icon="people-outline"></nb-icon>
+                  {{ equipe.memberCount }}
+                </span>
+                <span class="stat-badge">
+                  <nb-icon icon="grid-outline"></nb-icon>
+                  {{ equipe.activitiesCount }}
+                </span>
+              </div>
+            </div>
+            <div *ngIf="canManageTeams" class="team-actions">
+              <button class="action-btn edit-btn" (click)="startEditTeam(equipe, $event)" title="Edit">
+                <nb-icon icon="edit-outline"></nb-icon>
+              </button>
+              <button class="action-btn delete-btn" (click)="deleteTeam(equipe, $event)" title="Delete">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-area" [class.sidebar-collapsed]="sidebarCollapsed && !isMobile">
+    
+    <!-- Welcome Message -->
+    <div *ngIf="!selectedEquipe" class="welcome-message">
+      <div class="welcome-card">
+        <nb-icon icon="grid-outline" class="welcome-icon"></nb-icon>
+        <h2>Team Activities Manager</h2>
+        <p>Select a team from the sidebar to view and manage its activities</p>
+        <div class="stats-preview" *ngIf="equipes.length > 0">
+          <div class="stat-item">
+            <nb-icon icon="people-outline"></nb-icon>
+            <span>{{ equipes.length }} Teams</span>
+          </div>
+          <div class="stat-item">
+            <nb-icon icon="grid-outline"></nb-icon>
+            <span>{{ getTotalActivities() }} Total Activities</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Content -->
+    <div *ngIf="selectedEquipe" class="team-content">
+      
+      <div class="content-header">
+        <button class="back-btn" (click)="clearSelection()">
+          <nb-icon icon="arrow-back-outline"></nb-icon><span>Back</span>
+        </button>
+        <div class="header-info">
+          <div class="team-icon-large" [style.background]="getTypeColor(selectedEquipe.type)">
+            <i [class]="getTypeIcon(selectedEquipe.type)"></i>
+          </div>
+          <div class="team-info">
+            <h2>{{ selectedEquipe.nom }}</h2>
+            <span class="team-type-badge">{{ getTypeLabel(selectedEquipe.type) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activities Section -->
+      <div class="activities-section">
+        <div class="section-header">
+          <h3><i class="fas fa-tasks"></i> Team Activities</h3>
+          <button *ngIf="canManageActivities" class="add-activity-btn" (click)="openAddActivityModal()">
+            <nb-icon icon="plus-outline"></nb-icon>
+            <span>Add Activity</span>
+          </button>
+        </div>
+
+        <!-- Filters and Search Bar -->
+        <div class="filters-bar">
+          <!-- Search Input -->
+          <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              placeholder="Search activities by code, objective or description..." 
+              [(ngModel)]="searchTerm"
+              (input)="onSearchInput()"
+            />
+            <button *ngIf="searchTerm" class="clear-search" (click)="clearSearch()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="filter-group">
+            <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="filter-select">
+              <option value="all">All Status</option>
+              <option value="PLANIFIER">Planned</option>
+              <option value="ENCOURS">In Progress</option>
+              <option value="ENATTENTE">On Hold</option>
+              <option value="ENRETARD">Delayed</option>
+              <option value="TERMINI">Completed</option>
+              <option value="ANNULE">Cancelled</option>
+            </select>
+          </div>
+
+          <!-- Sort By -->
+          <div class="filter-group">
+            <select [(ngModel)]="sortBy" (change)="applyFilters()" class="filter-select">
+              <option value="code">Sort by Code</option>
+              <option value="status">Sort by Status</option>
+              <option value="startDate">Sort by Start Date</option>
+              <option value="progress">Sort by Progress</option>
+              <option value="ordre">Sort by Order</option>
+            </select>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="filter-group">
+            <select [(ngModel)]="sortOrder" (change)="applyFilters()" class="filter-select">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </div>
+
+          <!-- Reset Filters Button -->
+          <button class="reset-filters-btn" (click)="resetFilters()" *ngIf="isFilterApplied()">
+            <i class="fas fa-undo-alt"></i> Reset
+          </button>
+        </div>
+
+        <!-- Activities Timeline -->
+        <div class="activities-timeline">
+          <div *ngFor="let activity of paginatedActivities" class="activity-card">
+            <div class="activity-header">
+              <div class="activity-icon">
+                <i class="fas fa-bullseye"></i>
+              </div>
+              <div class="activity-info">
+                <h4>{{ activity.codeActive }}</h4>
+                <p class="activity-objectif">{{ activity.objectif }}</p>
+                <!-- ✅ NEW: Display Order -->
+                <span class="activity-order" *ngIf="activity.ordre">
+                  <i class="fas fa-sort-numeric-up"></i> Order: {{ activity.ordre }}
+                </span>
+              </div>
+              
+              <!-- Status Badge -->
+              <div class="activity-status">
+                <div class="status-badge" [style.background]="getStatusColor(activity.status || 'PLANIFIER')">
+                  <i [class]="getStatusIcon(activity.status || 'PLANIFIER')"></i>
+                  <span>{{ getStatusLabel(activity.status || 'PLANIFIER') }}</span>
+                </div>
+              </div>
+              
+              <!-- Progress Indicator -->
+              <div class="activity-progress">
+                <div class="progress-indicator">
+                  <div class="status-dot" [style.background]="getStatusColor(activity.status || 'PLANIFIER')"></div>
+                  <span class="progress-value">{{ getProgressPercentage(activity) }}%</span>
+                </div>
+              </div>
+              
+              <!-- Activity Actions -->
+              <div class="activity-actions">
+                <button class="edit-dates-btn" (click)="openEditRealDatesModal(activity)" title="Edit Actual Dates">
+                  <i class="fas fa-calendar-edit"></i>
+                </button>
+                <button *ngIf="canManageActivities" class="remove-activity-btn" (click)="removeActivity(activity)" title="Remove Activity">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="activity-body">
+              <p class="activity-description">{{ activity.description || 'No description provided' }}</p>
+              
+              <!-- Planned Dates -->
+              <div class="activity-dates">
+                <div class="date-badge">
+                  <i class="far fa-calendar-alt"></i>
+                  <span>From: {{ formatDate(activity.dateDebut) }}</span>
+                </div>
+                <div class="date-badge" *ngIf="activity.dateFin">
+                  <i class="far fa-calendar-check"></i>
+                  <span>To: {{ formatDate(activity.dateFin) }}</span>
+                </div>
+              </div>
+
+              <!-- Real Dates Display -->
+              <div class="real-dates">
+                <div class="real-dates-header">
+                  <i class="fas fa-clock"></i>
+                  <span>Actual Dates</span>
+                </div>
+                <div class="real-dates-content">
+                  <div class="date-badge real-date started" *ngIf="activity.dateStartReelle">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Started: {{ formatDate(activity.dateStartReelle) }}</span>
+                  </div>
+                  <div class="date-badge real-date completed" *ngIf="activity.dateFinReelle">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Completed: {{ formatDate(activity.dateFinReelle) }}</span>
+                  </div>
+                  <div class="date-badge real-date not-started" *ngIf="!activity.dateStartReelle && !activity.dateFinReelle">
+                    <i class="fas fa-hourglass-start"></i>
+                    <span>Not started yet</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="progress-bar-container">
+                <div class="progress-bar" [style.width.%]="getProgressPercentage(activity)" [style.background]="getProgressColor(getProgressPercentage(activity))"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredActivities.length === 0" class="empty-state">
+          <i class="fas fa-tasks-slash"></i>
+          <h4>No Activities Found</h4>
+          <p *ngIf="teamActivities.length === 0">This team doesn't have any activities yet.</p>
+          <p *ngIf="teamActivities.length > 0">No activities match your search or filters.</p>
+          <button *ngIf="teamActivities.length === 0 && canManageActivities" class="add-first-btn" (click)="openAddActivityModal()">
+            <i class="fas fa-plus-circle"></i> Add First Activity
+          </button>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" *ngIf="filteredActivities.length > pageSize">
+          <div class="pagination-info">
+            Showing {{ getStartIndex() }} - {{ getEndIndex() }} of {{ filteredActivities.length }} activities
+          </div>
+          
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="page-numbers">
+              <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Activity Modal -->
+<div class="modal-overlay" *ngIf="showAddActivityModal" (click)="closeAddActivityModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-tasks"></i> Add New Activity</h5>
+      <button class="close-btn" (click)="closeAddActivityModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="activityForm">
+      <div class="form-field">
+        <label>Select Activity *</label>
+        <select formControlName="activeId" class="form-input">
+          <option [value]="null">-- Select Activity --</option>
+          <option *ngFor="let act of availableActives" [value]="act.id">
+            {{ act.codeActive }} - {{ act.objectif }}
+          </option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Start Date *</label>
+        <input type="date" formControlName="dateDebut" class="form-input">
+      </div>
+      <div class="form-field">
+        <label>End Date (Optional)</label>
+        <input type="date" formControlName="dateFin" class="form-input">
+      </div>
+      <!-- Order Field -->
+      <div class="form-field">
+        <label>Order *</label>
+        <input type="number" formControlName="ordre" class="form-input" min="1" step="1" placeholder="1">
+        <small class="field-hint">Priority order of the activity (1 = highest priority)</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddActivityModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitAddActivity()" [disabled]="activityForm.invalid">
+        <i class="fas fa-save"></i> Add Activity
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,758 @@
+<!-- pages/my-team/rapports/rapports.component.html -->
+
+<div class="rapports-container">
+  
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>Loading reports...</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <div>
+        <h1>Project Reports</h1>
+        <p class="header-subtitle">Track and manage all project reports and productivity records</p>
+      </div>
+    </div>
+    <button *ngIf="canManageReports" class="btn-add" (click)="openAddRapportModal()">
+      <i class="fas fa-plus"></i>
+      <span>Add Report</span>
+    </button>
+  </div>
+
+  <!-- Project Info Card -->
+  <div class="project-info-card" *ngIf="currentProject">
+    <div class="project-icon">
+      <i class="fas fa-project-diagram"></i>
+    </div>
+    <div class="project-details">
+      <h2>{{ currentProject.nom }}</h2>
+      <div class="project-meta">
+        <span class="meta-item">
+          <i class="fas fa-calendar-alt"></i>
+          {{ formatDate(currentProject.objectifDebut) }} - {{ formatDate(currentProject.objectifFin) }}
+        </span>
+        <span class="meta-item">
+          <i class="fas fa-chart-line"></i>
+          Progress: {{ currentProject.progression }}%
+        </span>
+        <span class="meta-item">
+          <i class="fas fa-coins"></i>
+          Budget: {{ currentProject.budget | number }} DA
+        </span>
+        <span class="meta-item" *ngIf="currentProject.missionCode">
+          <i class="fas fa-bullseye"></i>
+          {{ currentProject.missionCode }}
+        </span>
+      </div>
+      <p class="project-description">{{ currentProject.description }}</p>
+    </div>
+  </div>
+
+  <!-- Reports Section -->
+  <div class="reports-section">
+    <div class="section-header">
+      <div class="title-section">
+        <h3><i class="fas fa-file-alt"></i> Reports</h3>
+        <span class="report-count-badge">{{ filteredRapports.length }} reports</span>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar" *ngIf="rapports.length > 0">
+      <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input 
+          type="text" 
+          placeholder="Search reports by title, description, or project..." 
+          [(ngModel)]="searchTerm"
+          (input)="filterRapports()"
+        />
+        <button *ngIf="searchTerm" class="clear-search" (click)="searchTerm = ''; filterRapports()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Reports Cards Grid -->
+    <div class="reports-cards-grid" *ngIf="filteredRapports.length > 0">
+      <div *ngFor="let report of paginatedRapports" class="report-card" (click)="viewRapportDetails(report)">
+        <div class="report-header">
+          <div class="report-icon-wrapper">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="report-info">
+            <h4>{{ report.titre }}</h4>
+            <div class="report-meta">
+              <span class="report-date">
+                <i class="far fa-calendar-alt"></i>
+                {{ formatDate(report.date) }}
+              </span>
+              <span class="report-project" *ngIf="report.projectName">
+                <i class="fas fa-project-diagram"></i>
+                {{ report.projectName }}
+              </span>
+              <span class="report-mission" *ngIf="report.missionCode">
+                <i class="fas fa-bullseye"></i>
+                {{ report.missionCode }}
+              </span>
+            </div>
+          </div>
+          <div class="report-actions" *ngIf="canManageReports" (click)="$event.stopPropagation()">
+            <button class="edit-btn" (click)="openEditRapportModal(report, $event)" title="Edit Report">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="delete-btn" (click)="deleteRapport(report, $event)" title="Delete Report">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+          <div class="report-readonly-badge" *ngIf="!canManageReports">
+            <i class="fas fa-lock"></i>
+          </div>
+        </div>
+        <div class="report-body">
+          <p class="report-description">{{ truncateText(report.resume, 120) }}</p>
+        </div>
+        <div class="report-footer">
+          <div class="report-stats">
+            <span *ngIf="report.rendements?.length">
+              <i class="fas fa-chart-line"></i>
+              {{ report.rendements.length }} productivity records
+            </span>
+            <span *ngIf="!report.rendements?.length">
+              <i class="fas fa-chart-line"></i>
+              No records yet
+            </span>
+          </div>
+          <div class="report-click-hint">
+            <i class="fas fa-arrow-right"></i>
+            <span>View details</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredRapports.length === 0 && !isLoading" class="empty-state">
+      <div class="empty-icon-wrapper">
+        <i class="fas fa-file-alt-slash"></i>
+      </div>
+      <h4>No Reports Found</h4>
+      <p *ngIf="rapports.length === 0">No reports have been created for this project yet.</p>
+      <p *ngIf="rapports.length > 0">No reports match your search criteria.</p>
+      <button *ngIf="rapports.length === 0 && canManageReports" class="add-first-btn" (click)="openAddRapportModal()">
+        <i class="fas fa-plus-circle"></i> Add First Report
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="filteredRapports.length > pageSize">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} - 
+        {{ Math.min(currentPage * pageSize, filteredRapports.length) }} 
+        of {{ filteredRapports.length }} reports
+      </div>
+      
+      <div class="pagination-controls">
+        <button class="page-btn" (click)="goToFirstPage()" [disabled]="currentPage === 1">
+          <i class="fas fa-angle-double-left"></i>
+        </button>
+        <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button *ngFor="let page of getPageNumbers()" class="page-num" [class.active]="page === currentPage" (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+        
+        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <button class="page-btn" (click)="goToLastPage()" [disabled]="currentPage === totalPages">
+          <i class="fas fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Report Modal -->
+<div class="modal-overlay" *ngIf="showAddRapportModal && canManageReports" (click)="closeAddRapportModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-file-alt"></i> Add New Report</h5>
+      <button class="close-btn" (click)="closeAddRapportModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="rapportForm">
+      <div class="form-field">
+        <label>Title *</label>
+        <input type="text" formControlName="titre" class="form-input" placeholder="Enter report title" autofocus>
+      </div>
+      <div class="form-field">
+        <label>Date *</label>
+        <input type="date" formControlName="date" class="form-input">
+      </div>
+      <div class="form-field">
+        <label>Summary *</label>
+        <textarea formControlName="resume" rows="6" class="form-input" placeholder="Enter report summary or content..."></textarea>
+      </div>
+      
+      <!-- MongoDB Details Section -->
+      <div class="mongodb-section">
+        <div class="section-divider">
+          <span>Additional Details (MongoDB)</span>
+          <span class="mongodb-badge">NoSQL</span>
+        </div>
+        <div class="info-message">
+          <i class="fas fa-database"></i>
+          <small>Add extra information about this report (weather, photos, observations, etc.)</small>
+        </div>
+        
+        <!-- Dynamic Fields -->
+        <div class="dynamic-fields">
+          <div *ngFor="let field of mongodbFields; let i = index" class="field-row">
+            <div class="field-key">
+              <input 
+                type="text" 
+                [(ngModel)]="field.key" 
+                [ngModelOptions]="{standalone: true}"
+                placeholder="Field name (e.g., meteo, temperature)" 
+                class="form-input"
+                (keyup)="updateMongoDBDetails()"
+              />
+            </div>
+            <div class="field-value">
+              <input 
+                type="text" 
+                [(ngModel)]="field.value" 
+                [ngModelOptions]="{standalone: true}"
+                placeholder="Field value (e.g., Ensoleillé, 35)" 
+                class="form-input"
+                (keyup)="updateMongoDBDetails()"
+              />
+            </div>
+            <button 
+              type="button" 
+              class="remove-field-btn" 
+              (click)="removeMongoDBField(i)"
+              title="Remove this field">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <button 
+            type="button" 
+            class="add-field-btn" 
+            (click)="addMongoDBField()">
+            <i class="fas fa-plus"></i>
+            <span>Add Field</span>
+          </button>
+        </div>
+        
+        <!-- Preview of JSON -->
+        <div class="json-preview" *ngIf="getMongoDBJson()">
+          <div class="preview-header">
+            <i class="fas fa-code"></i>
+            <span>JSON Preview (auto-generated)</span>
+          </div>
+          <pre class="json-preview-content">{{ getMongoDBJson() }}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddRapportModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitAddRapport()" [disabled]="rapportForm.invalid">
+        <i class="fas fa-save"></i> Add Report
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Report Modal -->
+<div class="modal-overlay" *ngIf="showEditRapportModal && canManageReports" (click)="closeEditRapportModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-edit"></i> Edit Report</h5>
+      <button class="close-btn" (click)="closeEditRapportModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="editRapportForm">
+      <div class="form-field">
+        <label>Title *</label>
+        <input type="text" formControlName="titre" class="form-input" placeholder="Enter report title">
+      </div>
+      <div class="form-field">
+        <label>Date *</label>
+        <input type="date" formControlName="date" class="form-input">
+      </div>
+      <div class="form-field">
+        <label>Summary *</label>
+        <textarea formControlName="resume" rows="6" class="form-input" placeholder="Enter report summary or content..."></textarea>
+      </div>
+      
+      <!-- MongoDB Details Section -->
+      <div class="mongodb-section">
+        <div class="section-divider">
+          <div class="divider-left">
+            <i class="fas fa-database"></i>
+            <span>Additional Details</span>
+          </div>
+          <div class="divider-right">
+            <span class="mongodb-badge">NoSQL</span>
+            <span class="mongodb-badge flexible">Flexible</span>
+          </div>
+        </div>
+        
+        <div class="info-message">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <small>
+              <strong>Add flexible data</strong> — Each report can have different fields.
+              <span class="examples">Examples: weather, temperature, photos, observations, equipment, etc.</span>
+            </small>
+          </div>
+        </div>
+        
+        <!-- Dynamic Fields -->
+        <div class="dynamic-fields">
+          <div class="fields-header">
+            <span class="header-key">Field Name</span>
+            <span class="header-value">Value</span>
+            <span class="header-action"></span>
+          </div>
+          
+          <div *ngFor="let field of mongodbFields; let i = index" class="field-row">
+            <div class="field-key">
+              <input 
+                type="text" 
+                [(ngModel)]="field.key" 
+                [ngModelOptions]="{standalone: true}"
+                placeholder="e.g., meteo, temperature, photos" 
+                class="form-input"
+                (keyup)="updateMongoDBDetails()"
+              />
+            </div>
+            <div class="field-value">
+              <input 
+                type="text" 
+                [(ngModel)]="field.value" 
+                [ngModelOptions]="{standalone: true}"
+                placeholder="e.g., Ensoleillé, 35, ['photo1.jpg']" 
+                class="form-input"
+                (keyup)="updateMongoDBDetails()"
+              />
+            </div>
+            <button 
+              type="button" 
+              class="remove-field-btn" 
+              (click)="removeMongoDBField(i)"
+              [disabled]="mongodbFields.length === 1"
+              title="Remove this field">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <button 
+            type="button" 
+            class="add-field-btn" 
+            (click)="addMongoDBField()">
+            <i class="fas fa-plus"></i>
+            <span>Add Another Field</span>
+          </button>
+        </div>
+        
+        <!-- JSON Preview -->
+        <div class="json-preview" *ngIf="getMongoDBJson()">
+          <div class="preview-header">
+            <i class="fas fa-code"></i>
+            <span>Generated JSON (sent to MongoDB)</span>
+            <span class="preview-badge">auto</span>
+          </div>
+          <pre class="json-preview-content">{{ getMongoDBJson() }}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeEditRapportModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitEditRapport()" [disabled]="editRapportForm.invalid">
+        <i class="fas fa-save"></i> Update Report
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal-overlay" *ngIf="showRapportDetailModal" (click)="closeRapportDetailModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>
+        <i class="fas fa-file-alt"></i> 
+        <span *ngIf="selectedRapport">Report Details - {{ selectedRapport.titre }}</span>
+        <span *ngIf="!selectedRapport">Report Details</span>
+      </h5>
+      <button class="close-btn" (click)="closeRapportDetailModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- Report Info -->
+      <div class="report-info-section" *ngIf="selectedRapport">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label"><i class="far fa-calendar-alt"></i> Date</span>
+            <span class="info-value">{{ formatDate(selectedRapport.date) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label"><i class="fas fa-project-diagram"></i> Project</span>
+            <span class="info-value">{{ selectedRapport.projectName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label"><i class="fas fa-bullseye"></i> Mission</span>
+            <span class="info-value">{{ selectedRapport.missionCode || 'N/A' }}</span>
+          </div>
+        </div>
+        <div class="info-summary">
+          <span class="info-label"><i class="fas fa-align-left"></i> Summary</span>
+          <p class="info-value">{{ selectedRapport.resume }}</p>
+        </div>
+        
+        <!-- MongoDB Details Display -->
+        <div class="mongodb-details-section" *ngIf="selectedRapportDetails">
+          <div class="section-header">
+            <h5><i class="fas fa-database"></i> Additional Details (MongoDB)</h5>
+            <span class="mongodb-badge">NoSQL</span>
+          </div>
+          <div class="mongodb-details-content">
+            <div class="detail-item" *ngFor="let item of selectedRapportDetails | keyvalue">
+              <span class="detail-key">{{ item.key }}</span>
+              <span class="detail-value">{{ item.value | json }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fichiers Section (Attached Files) -->
+      <div class="fichiers-section" *ngIf="selectedRapport">
+        <div class="section-header">
+          <h5><i class="fas fa-paperclip"></i> Attached Files</h5>
+          <button *ngIf="canManageReports" class="add-file-btn" (click)="openAddFileModal()">
+            <i class="fas fa-plus"></i>
+            <span>Add File</span>
+          </button>
+        </div>
+
+        <!-- File List -->
+        <div class="fichiers-grid" *ngIf="selectedRapportFichiers.length > 0">
+          <div *ngFor="let fichier of selectedRapportFichiers" class="fichier-item" 
+               [class.is-image]="fichier.type === 'IMAGE'"
+               [class.is-video]="fichier.type === 'VIDEO'"
+               [class.is-document]="fichier.type === 'DOCUMENT'">
+            
+            <div class="fichier-icon">
+              <i *ngIf="fichier.type === 'IMAGE'" class="fas fa-image"></i>
+              <i *ngIf="fichier.type === 'VIDEO'" class="fas fa-video"></i>
+              <i *ngIf="fichier.type === 'DOCUMENT'" class="fas fa-file-pdf"></i>
+            </div>
+            
+            <div class="fichier-info">
+              <span class="fichier-titre">{{ fichier.titre }}</span>
+              <span class="fichier-meta">
+                {{ formatFileSize(fichier.taille) }} • {{ formatDate(fichier.dateUpload) }}
+              </span>
+            </div>
+            
+            <div class="fichier-actions">
+              <button class="view-file-btn" (click)="viewFile(fichier)" title="View">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button *ngIf="canManageReports" class="delete-file-btn" (click)="deleteFile(fichier, $event)" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty File State -->
+        <div *ngIf="selectedRapportFichiers.length === 0" class="empty-fichiers">
+          <i class="fas fa-paperclip"></i>
+          <p>No files attached</p>
+          <small *ngIf="canManageReports">Click "Add File" to upload documents, images, or videos</small>
+        </div>
+      </div>
+
+      <!-- Productivity Records Section -->
+      <div class="productivity-section" *ngIf="selectedRapport">
+        <div class="section-header">
+          <h4><i class="fas fa-chart-line"></i> Productivity Records</h4>
+          <button *ngIf="canManageReports" class="add-productivity-btn" (click)="openAddRendementModal()">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add Record</span>
+          </button>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="productivity-stats" *ngIf="selectedRapportRendements.length > 0">
+          <div class="stat-card-mini">
+            <div class="stat-icon"><i class="fas fa-chart-simple"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">{{ calculateTotalProductivity() | number:'1.0-0' }}</div>
+              <div class="stat-label">Total Productivity</div>
+            </div>
+          </div>
+          <div class="stat-card-mini">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">{{ calculateTotalHours() | number:'1.1-1' }}</div>
+              <div class="stat-label">Total Hours</div>
+            </div>
+          </div>
+          <div class="stat-card-mini">
+            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">{{ selectedRapportRendements.length }}</div>
+              <div class="stat-label">Records</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Records Table -->
+        <div class="productivity-table-wrapper" *ngIf="selectedRapportRendements.length > 0">
+          <table class="productivity-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Duration</th>
+                <th>Value</th>
+                <th>Unit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rend of selectedRapportRendements">
+                <td><i class="far fa-calendar-alt"></i> {{ formatDate(rend.date) }}</td>
+                <td>{{ formatTime(rend.heureDebut) }}</td>
+                <td>{{ formatTime(rend.heureFin) }}</td>
+                <td><span class="duration-badge">{{ rend.dureeHeures | number:'1.1-1' }}h</span></td>
+                <td><strong class="productivity-value">{{ rend.valeurRendement | number:'1.0-0' }}</strong></td>
+                <td><span class="unit-badge">{{ rend.uniteRendement }}</span></td>
+                <td class="actions-cell" *ngIf="canManageReports">
+                  <button class="edit-record-btn" (click)="openEditRendementModal(rend)" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="delete-record-btn" (click)="deleteRendement(rend, $event)" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+                <td class="actions-cell-readonly" *ngIf="!canManageReports">
+                  <span class="readonly-badge"><i class="fas fa-lock"></i></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty Productivity State -->
+        <div *ngIf="selectedRapportRendements.length === 0" class="empty-productivity">
+          <i class="fas fa-chart-line"></i>
+          <p>No productivity records yet</p>
+          <small *ngIf="canManageReports">Click "Add Record" to track productivity</small>
+        </div>
+      </div>
+      
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeRapportDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Productivity Record Modal -->
+<div class="modal-overlay" *ngIf="showAddRendementModal && canManageReports" (click)="closeAddRendementModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>
+        <i class="fas" [class.fa-plus-circle]="!editingRendementId" [class.fa-edit]="editingRendementId"></i> 
+        <span *ngIf="!editingRendementId">Add Productivity Record</span>
+        <span *ngIf="editingRendementId">Edit Productivity Record</span>
+      </h5>
+      <button class="close-btn" (click)="closeAddRendementModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" [formGroup]="rendementForm">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Start Time *</label>
+          <input type="time" formControlName="heureDebut" class="form-input" step="60">
+        </div>
+        <div class="form-field">
+          <label>End Time *</label>
+          <input type="time" formControlName="heureFin" class="form-input" step="60">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label>Date *</label>
+          <input type="date" formControlName="date" class="form-input">
+        </div>
+        <div class="form-field">
+          <label>Unit *</label>
+          <select formControlName="uniteRendement" class="form-input">
+            <option value="m²">Square Meters (m²)</option>
+            <option value="km">Kilometers (km)</option>
+            <option value="m">Meters (m)</option>
+            <option value="unit">Units</option>
+            <option value="point">Points</option>
+            <option value="percentage">Percentage (%)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-field">
+        <label>Productivity Value *</label>
+        <input type="number" formControlName="valeurRendement" class="form-input" 
+               step="0.01" min="0" placeholder="Enter productivity value">
+      </div>
+      
+      <div class="info-message">
+        <i class="fas fa-info-circle"></i>
+        <small>Productivity records help track team performance and progress over time.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddRendementModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitRendement()" [disabled]="rendementForm.invalid">
+        <i class="fas fa-save"></i> 
+        <span *ngIf="!editingRendementId">Add Record</span>
+        <span *ngIf="editingRendementId">Update Record</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add File Modal -->
+<div class="modal-overlay" *ngIf="showAddFileModal && canManageReports" (click)="closeAddFileModal()">
+  <div class="modal-container modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-upload"></i> Upload File</h5>
+      <button class="close-btn" (click)="closeAddFileModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>File Title *</label>
+        <input type="text" [(ngModel)]="newFileTitre" class="form-input" placeholder="Enter file title...">
+      </div>
+      
+      <div class="form-field">
+        <label>File Type *</label>
+        <select [(ngModel)]="newFileType" class="form-input">
+          <option value="DOCUMENT">Document (PDF, Word, Excel)</option>
+          <option value="IMAGE">Image (JPG, PNG, GIF)</option>
+          <option value="VIDEO">Video (MP4, AVI, MOV)</option>
+        </select>
+      </div>
+      
+      <div class="form-field file-upload-area" 
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)">
+        <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept="*/*">
+        <div *ngIf="!selectedFile" class="upload-placeholder" (click)="fileInput.click()">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Click or drag file here</p>
+          <small>Maximum size: 50MB</small>
+        </div>
+        <div *ngIf="selectedFile" class="file-preview">
+          <i class="fas fa-file"></i>
+          <span class="file-name">{{ selectedFile.name }}</span>
+          <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
+          <button class="remove-file-btn" (click)="selectedFile = null; fileInput.value = ''">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="info-message">
+        <i class="fas fa-info-circle"></i>
+        <small>Supported formats: Images (JPG, PNG, GIF), Videos (MP4, AVI, MOV), Documents (PDF, DOC, DOCX, XLS, XLSX)</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeAddFileModal()">Cancel</button>
+      <button class="confirm-btn" (click)="submitFileUpload()" 
+              [disabled]="!selectedFile || !newFileTitre || !newFileType">
+        <i class="fas fa-upload"></i> Upload
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal-overlay" *ngIf="showFilePreviewModal" (click)="closeFilePreviewModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5><i class="fas fa-eye"></i> File Preview - {{ previewFile?.titre }}</h5>
+      <button class="close-btn" (click)="closeFilePreviewModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body file-preview-body">
+      <div *ngIf="previewFile" class="file-preview-container">
+        <!-- Image Preview -->
+        <img *ngIf="previewFile.type === 'IMAGE'" 
+             [src]="getFileUrl(previewFile.id)" 
+             alt="{{ previewFile.titre }}"
+             class="preview-image">
+        
+        <!-- Video Preview -->
+        <video *ngIf="previewFile.type === 'VIDEO'" 
+               controls 
+               class="preview-video">
+          <source [src]="getFileUrl(previewFile.id)">
+          Your browser does not support the video tag.
+        </video>
+        
+        <!-- Document Preview -->
+        <div *ngIf="previewFile.type === 'DOCUMENT'" class="document-preview">
+          <i class="fas fa-file-pdf"></i>
+          <p>{{ previewFile.titre }}</p>
+          <a [href]="getFileUrl(previewFile.id)" download class="download-link">
+            <i class="fas fa-download"></i> Download File
+          </a>
+        </div>
+        
+        <!-- File Info -->
+        <div class="file-info">
+          <span><strong>Title:</strong> {{ previewFile.titre }}</span>
+          <span><strong>Type:</strong> {{ previewFile.type }}</span>
+          <span><strong>Size:</strong> {{ formatFileSize(previewFile.taille) }}</span>
+          <span><strong>Uploaded:</strong> {{ formatDate(previewFile.dateUpload) }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeFilePreviewModal()">Close</button>
+      <button class="confirm-btn" *ngIf="previewFile" (click)="downloadFile(previewFile)">
+        <i class="fas fa-download"></i> Download
+      </button>
+    </div>
+  </div>
+</div>

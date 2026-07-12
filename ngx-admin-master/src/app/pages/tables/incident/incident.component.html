@@ -1,0 +1,46 @@
+<nb-card class="incident-card">
+  <nb-card-header class="card-header-custom">
+    <div class="header-content">
+      <div class="title-section">
+        <nb-icon icon="alert-triangle-outline" class="header-icon"></nb-icon>
+        <div>
+          <h4 class="card-title">Incidents Management</h4>
+          <span class="card-subtitle">
+            <nb-icon icon="stats-chart-outline" class="subtitle-icon"></nb-icon>
+            Track and manage all workplace incidents
+          </span>
+        </div>
+      </div>
+    </div>
+  </nb-card-header>
+
+  <nb-card-body class="card-body-custom">
+    <!-- Filter Banner -->
+    <div class="filter-banner" *ngIf="filterEmployeId">
+      <div class="filter-info">
+        <nb-icon icon="filter-outline"></nb-icon>
+        <span>Showing incidents for: <strong>{{ filterEmployeName }}</strong></span>
+      </div>
+      <button nbButton status="warning" size="tiny" (click)="clearFilter()">
+        <nb-icon icon="close-outline"></nb-icon>
+        Clear Filter
+      </button>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-row" *ngIf="source.count() > 0">
+      <div class="stat-card">
+        <div class="stat-value">{{ source.count() }}</div>
+        <div class="stat-label">Total Incidents</div>
+      </div>
+    </div>
+
+    <ng2-smart-table 
+      [settings]="settings" 
+      [source]="source" 
+      (createConfirm)="onCreate($event)"
+      (editConfirm)="onEdit($event)"
+      (deleteConfirm)="onDeleteConfirm($event)">
+    </ng2-smart-table>
+  </nb-card-body>
+</nb-card>

@@ -1,0 +1,126 @@
+<!-- src/app/pages/pivot-table/pivot-table.component.html -->
+<div class="pivot-container">
+  
+  <!-- Header -->
+  <div class="pivot-header">
+    <div>
+      <h1>📊 Pivot Table</h1>
+      <p class="subtitle">{{ getTotalRows() }} records • Dynamic aggregation</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" (click)="resetData()" title="Reset">
+        <i class="fas fa-undo"></i>
+      </button>
+      <button class="btn-icon" (click)="exportData()" title="Export CSV">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-grid">
+    <div class="control-item">
+      <label>📌 Rows</label>
+      <select [(ngModel)]="rowField" (change)="updatePivot()">
+        <option *ngFor="let field of availableFields" [value]="field">{{ field }}</option>
+      </select>
+    </div>
+
+    <div class="control-item">
+      <label>📋 Columns</label>
+      <select [(ngModel)]="colField" (change)="updatePivot()">
+        <option *ngFor="let field of availableFields" [value]="field">{{ field }}</option>
+      </select>
+    </div>
+
+    <div class="control-item">
+      <label>🧮 Values</label>
+      <select [(ngModel)]="valueField" (change)="updatePivot()">
+        <option *ngFor="let val of availableValues" [value]="val">{{ val }}</option>
+      </select>
+    </div>
+
+    <div class="control-item">
+      <label>⚡ Aggregator</label>
+      <select [(ngModel)]="aggregator" (change)="updatePivot()">
+        <option *ngFor="let agg of availableAggregators" [value]="agg">{{ agg | titlecase }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-grid">
+    <div class="filter-item">
+      <label>🏷️ Mission ID</label>
+      <input type="number" [(ngModel)]="missionId" (change)="updatePivot()" placeholder="Filter by mission..." class="filter-input">
+    </div>
+    <div class="filter-item">
+      <label>📊 Status</label>
+      <select [(ngModel)]="status" (change)="updatePivot()">
+        <option value="">All Statuses</option>
+        <option *ngFor="let statusOption of statusOptions" [value]="statusOption.value">
+          {{ statusOption.label }}
+        </option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <label>📅 Year</label>
+      <input type="number" [(ngModel)]="year" (change)="updatePivot()" placeholder="Filter by year..." class="filter-input">
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <span>Loading...</span>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMessage" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Pivot Table -->
+  <div class="table-wrapper" *ngIf="!isLoading && !errorMessage">
+    <div *ngIf="pivotRows.length === 0" class="empty-state">
+      📭 No data to display
+    </div>
+
+    <div class="pivot-table-container" *ngIf="pivotRows.length > 0">
+      <table class="pivot-table">
+        <thead>
+          <tr>
+            <th class="row-header">{{ getDisplayName(rowField) }}</th>
+            <th *ngFor="let col of pivotHeaders">{{ getDisplayName(col) }}</th>
+            <th class="total-header">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of pivotRows; let i = index" 
+              [class.even]="i % 2 === 0" 
+              [class.odd]="i % 2 !== 0"
+              [class.total-row]="row.isTotal">
+            <td class="row-label" [class.total-label]="row.isTotal">
+              <strong>{{ getDisplayLabel(row.rowLabel) }}</strong>
+            </td>
+            <td *ngFor="let col of pivotHeaders" 
+                [class.highlight]="!row.isTotal && (row.values[col] || 0) > 100000">
+              {{ formatNumber(row.values[col] || 0) }}
+            </td>
+            <td class="row-total" [class.grand-total]="row.isTotal">
+              <strong>{{ formatNumber(row.rowTotal || 0) }}</strong>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Info Bar -->
+    <div class="table-info-bar" *ngIf="pivotRows.length > 0">
+      <span>📊 {{ getTotalRows() }} rows × {{ getTotalColumns() }} columns</span>
+      <span>⚡ Aggregator: <strong>{{ aggregator }}</strong></span>
+      <span>📈 Total: <strong>{{ formatNumber(grandTotal) }}</strong></span>
+    </div>
+  </div>
+</div>
