@@ -55,7 +55,7 @@ The application enables:
 
 ![Map Visualization](uploads/localhost_4200_pages_maps_leaflet(abc).png)
 
-### Mission Details
+### Ressources management
 
 ![Mission Details](uploads/localhost_4200_pages_mission-dashboard(abc)%20(1).png)
 
