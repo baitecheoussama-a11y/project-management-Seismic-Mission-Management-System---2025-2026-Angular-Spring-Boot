@@ -360,7 +360,7 @@ Password: password123
 
 **Author**: Oussama Baiteche
 - **GitHub**: [@baitecheoussama-a11y](https://github.com/baitecheoussama-a11y)
-- **Project Link**: [https://github.com/baitecheoussama-a11y/robot-maze-3d](https://github.com/baitecheoussama-a11y/robot-maze-3d)
+- **Project Link**: [https://github.com/baitecheoussama-a11y/project-management-Seismic-Mission-Management-System---2025-2026-Angular-Spring-Boot](https://github.com/baitecheoussama-a11y/project-management-Seismic-Mission-Management-System---2025-2026-Angular-Spring-Boot)
 
 
 ---
