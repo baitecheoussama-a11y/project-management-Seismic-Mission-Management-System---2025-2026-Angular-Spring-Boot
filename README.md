@@ -1,6 +1,6 @@
 # 🚀 Seismic Mission Management System
 
-[![Angular](https://img.shields.io/badge/Angular-17+-red.svg)](https://angular.io/)
+[![Angular](https://img.shields.io/badge/Angular- 14.14+-red.svg)](https://angular.io/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
