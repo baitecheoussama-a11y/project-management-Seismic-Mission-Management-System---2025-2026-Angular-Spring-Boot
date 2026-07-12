@@ -179,7 +179,7 @@ The application follows a **three-tier client/server architecture**:
 ```text
 Pfe/
 │
-├── backend/
+├── webapp(backend-spring boot)/
 │ ├── src/
 │ │ ├── main/
 │ │ │ ├── java/com/enageo/
@@ -198,15 +198,10 @@ Pfe/
 │ │ └── java/
 │ └── pom.xml # Maven dependencies
 │
-├── frontend/
+├── ngx-admin-master (frontend- angular)
 │ ├── src/
 │ │ ├── app/
-│ │ │ ├── modules/ # Angular Modules
-│ │ │ │ ├── auth/ # Authentication
-│ │ │ │ ├── admin/ # Administration
-│ │ │ │ ├── mission/ # Mission management
-│ │ │ │ ├── resources/ # Resource management
-│ │ │ │ └── dashboard/ # Dashboards
+│ │
 │ │ │ ├── shared/ # Shared components
 │ │ │ ├── services/ # API services
 │ │ │ ├── models/ # TypeScript models
@@ -233,7 +228,7 @@ Pfe/
 │ └── localhost_4200_pages_mission-dashboard(abc) (1).png
 │
 ├── README.md
-├── LICENSE
+
 └── .gitignore
 ```
 
