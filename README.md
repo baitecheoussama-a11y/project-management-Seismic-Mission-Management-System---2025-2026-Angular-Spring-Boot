@@ -356,6 +356,13 @@ Password: password123
 - **University** - For the academic framework and supervision
 - **Faculty of Sciences - Department of Computer Science** - For providing the academic environment and support
 
+## 📧 Contact
+
+**Author**: Oussama Baiteche
+- **GitHub**: [@baitecheoussama-a11y](https://github.com/baitecheoussama-a11y)
+- **Project Link**: [https://github.com/baitecheoussama-a11y/robot-maze-3d](https://github.com/baitecheoussama-a11y/robot-maze-3d)
+
+
 ---
 
 <div align="center">
